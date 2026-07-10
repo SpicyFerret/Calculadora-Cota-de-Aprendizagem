@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cota-aprendiz",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set PATH=C:\\Program Files\\nodejs;%PATH% && cd app && npm start -- --port %PORT%"
+      ],
+      "port": 4300,
+      "autoPort": true
+    }
+  ]
+}

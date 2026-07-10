@@ -1,0 +1,20 @@
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Python
+__pycache__/
+*.pyc
+
+# OpenTofu / Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+infra/build/
+infra/bootstrap/.terraform.lock.hcl
+
+# Diversos
+.DS_Store
+Thumbs.db

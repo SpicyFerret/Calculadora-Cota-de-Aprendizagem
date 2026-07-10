@@ -1,0 +1,26 @@
+<mat-toolbar class="topo">
+  <mat-icon aria-hidden="true">school</mat-icon>
+  <span class="titulo">Calculadora de Cota de Aprendizagem</span>
+  <span class="espaco"></span>
+  <button
+    matIconButton
+    (click)="tema.alternar()"
+    [attr.aria-label]="tema.escuro() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+  >
+    <mat-icon>{{ tema.escuro() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+  </button>
+</mat-toolbar>
+
+<main>
+  <app-entrada />
+  <app-resultado />
+</main>
+
+<footer>
+  @if (cbo.carregada()) {
+    <span>
+      Base CBO: {{ cbo.totalOcupacoes() }} ocupações · atualizada em {{ cbo.geradoEm() }} ·
+      fonte: {{ cbo.fonte() }}
+    </span>
+  }
+</footer>

@@ -1,0 +1,155 @@
+<mat-card appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>Quadro de funcionários</mat-card-title>
+    <mat-card-subtitle>
+      Informe os funcionários por CBO e vínculo — pelo formulário ou importando uma planilha.
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (cbo.erroCarga(); as erro) {
+      <p class="erro-carga">{{ erro }}</p>
+    } @else if (!cbo.carregada()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Carregando base CBO" />
+      <p class="dica">Carregando a base oficial de CBOs…</p>
+    } @else {
+      <mat-tab-group [selectedIndex]="abaAtiva()" (selectedIndexChange)="abaAtiva.set($event)">
+        <mat-tab label="Formulário">
+          <div class="linhas">
+            @for (linha of linhas(); track $index) {
+              <div class="linha">
+                <mat-form-field class="campo-cbo" appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>CBO (código ou título)</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="linha.cbo"
+                    (input)="aoDigitarCbo(linha.cbo)"
+                    [matAutocomplete]="autoCbo"
+                    placeholder="Ex.: 411010 ou recepcionista"
+                  />
+                  <mat-autocomplete #autoCbo="matAutocomplete">
+                    @for (opcao of opcoes(); track opcao.codigo) {
+                      <mat-option [value]="opcao.codigo">
+                        <span class="opcao-codigo">{{ opcao.codigo }}</span> {{ opcao.titulo }}
+                      </mat-option>
+                    }
+                  </mat-autocomplete>
+                  @if (tituloDe(linha.cbo); as titulo) {
+                    <mat-hint>{{ titulo }}</mat-hint>
+                  } @else if (cboInvalido(linha.cbo)) {
+                    <mat-hint class="hint-erro">CBO não encontrado na base oficial</mat-hint>
+                  }
+                </mat-form-field>
+
+                <mat-form-field class="campo-tipo" appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>Vínculo</mat-label>
+                  <mat-select [(ngModel)]="linha.tipo">
+                    @for (tipo of tipos; track tipo.valor) {
+                      <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field class="campo-qtd" appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>Qtd.</mat-label>
+                  <input matInput type="number" min="1" step="1" [(ngModel)]="linha.quantidade" />
+                </mat-form-field>
+
+                <button
+                  matIconButton
+                  class="remover"
+                  (click)="removerLinha($index)"
+                  [disabled]="linhas().length === 1"
+                  aria-label="Remover linha"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="acoes-linhas">
+            <button matButton (click)="adicionarLinha()">
+              <mat-icon>add</mat-icon>
+              Adicionar linha
+            </button>
+            <span class="contagem">{{ totalPessoas() }} funcionário(s) com CBO válido</span>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Importar planilha">
+          <div
+            class="zona-arquivo"
+            [class.arrastando]="arrastando()"
+            (dragover)="aoArrastar($event, true)"
+            (dragleave)="aoArrastar($event, false)"
+            (drop)="aoSoltar($event)"
+          >
+            <mat-icon class="icone-upload">upload_file</mat-icon>
+            <p>Arraste um arquivo <strong>.csv</strong> ou <strong>.xlsx</strong> aqui, ou</p>
+            <button matButton="outlined" (click)="seletor.click()">Escolher arquivo</button>
+            <input #seletor type="file" accept=".csv,.xlsx,.xls" hidden (change)="aoEscolherArquivo($event)" />
+            <p class="dica">
+              Formatos aceitos: <code>CBO;TIPO;QUANTIDADE</code> (agregado) ou
+              <code>NOME;CBO;TIPO</code> (um funcionário por linha). Tipos: CLT, PCD, Estagiário, Aprendiz.
+            </p>
+            <p class="dica">
+              Modelos: <a href="modelos/modelo.csv" download>modelo.csv</a> ·
+              <a href="modelos/modelo.xlsx" download>modelo.xlsx</a>
+            </p>
+          </div>
+
+          @if (lendoArquivo()) {
+            <mat-progress-bar mode="indeterminate" aria-label="Lendo arquivo" />
+          }
+
+          @if (importacao(); as imp) {
+            <div class="resumo-importacao">
+              <p>
+                <strong>{{ imp.linhas.length }}</strong> linha(s) válida(s)
+                ({{ pessoasImportadas() }} funcionário(s), formato {{ imp.formato === 'agregado' ? 'agregado' : 'lista de funcionários' }}).
+              </p>
+              @if (imp.erros.length > 0) {
+                <details class="erros" open>
+                  <summary>{{ imp.erros.length }} linha(s) ignorada(s) por erro</summary>
+                  <ul>
+                    @for (erro of imp.erros; track $index) {
+                      <li>{{ erro }}</li>
+                    }
+                  </ul>
+                </details>
+              }
+              @if (imp.linhas.length > 0) {
+                <div class="acoes-importacao">
+                  <button matButton="outlined" (click)="editarNoFormulario()">
+                    <mat-icon>edit</mat-icon>
+                    Revisar no formulário
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </mat-tab>
+      </mat-tab-group>
+
+      <div class="rodape-acoes">
+        @if (estado.processando()) {
+          <div class="progresso" role="status" aria-live="polite">
+            <mat-progress-bar mode="determinate" [value]="estado.progresso()" />
+            <span>Classificando CBOs e calculando a cota… {{ estado.progresso() }}%</span>
+          </div>
+        } @else {
+          <button
+            matButton="filled"
+            class="botao-calcular"
+            (click)="abaAtiva() === 0 ? calcularDoFormulario() : calcularDaImportacao()"
+            [disabled]="abaAtiva() === 1 && (importacao()?.linhas ?? []).length === 0"
+          >
+            <mat-icon>calculate</mat-icon>
+            Calcular cota
+          </button>
+        }
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,49 @@
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$orange-palette,
+        theme-type: color-scheme,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  // Paleta dos gráficos — validada (CVD, croma, contraste) para cada superfície.
+  --viz-incluidos: #0e93a3;
+  --viz-excluidos-cbo: #eb6834;
+  --viz-aprendizes: #4a3aa7;
+  --viz-estagiarios: #eda100;
+  --viz-excluidos-manual: #e87ba4;
+  --viz-cota-maxima: #5aa9b5; // passo mais claro do cyan (ordinal, mesma grandeza)
+  --viz-grade: #e1e0d9;
+
+  // Cores de status (sempre acompanhadas de ícone + texto, nunca só cor)
+  --status-bom: #0ca30c;
+  --status-critico: #d03b3b;
+}
+
+html.tema-escuro {
+  color-scheme: dark;
+
+  --viz-incluidos: #189aaa;
+  --viz-excluidos-cbo: #d95926;
+  --viz-aprendizes: #9085e9;
+  --viz-estagiarios: #c98500;
+  --viz-excluidos-manual: #d55181;
+  --viz-cota-maxima: #0e6570;
+  --viz-grade: #2c2c2a;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+}

@@ -1,0 +1,174 @@
+@if (estado.resultado(); as r) {
+  <mat-card appearance="outlined" class="cartao-resultado">
+    <mat-card-header>
+      <mat-card-title>Resultado</mat-card-title>
+      <mat-card-subtitle>
+        Calculado em {{ r.calculadoEm | date: "dd/MM/yyyy 'às' HH:mm" }} · base CBO de {{ cbo.geradoEm() }}
+      </mat-card-subtitle>
+      <span class="espaco"></span>
+      <mat-button-toggle-group
+        class="troca-visao"
+        [value]="visao()"
+        (change)="visao.set($event.value)"
+        aria-label="Alternar entre visão geral e detalhada"
+      >
+        <mat-button-toggle value="geral">
+          <mat-icon>dashboard</mat-icon>
+          Visão geral
+        </mat-button-toggle>
+        <mat-button-toggle value="detalhe">
+          <mat-icon>table_rows</mat-icon>
+          Detalhado por CBO
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="cartoes-resumo">
+        <div class="tile">
+          <span class="valor">{{ r.base | number: '1.0-0':'pt-BR' }}</span>
+          <span class="rotulo">na base de cálculo</span>
+        </div>
+        <div class="tile">
+          <span class="valor">{{ r.minimo | number: '1.0-0':'pt-BR' }}</span>
+          <span class="rotulo">cota mínima (5%)</span>
+        </div>
+        <div class="tile">
+          <span class="valor">{{ r.maximo | number: '1.0-0':'pt-BR' }}</span>
+          <span class="rotulo">cota máxima (15%)</span>
+        </div>
+        <div class="tile">
+          <span class="valor">{{ r.aprendizesAtuais | number: '1.0-0':'pt-BR' }}</span>
+          <span class="rotulo">aprendizes atuais</span>
+        </div>
+        <div class="tile situacao" [class.ok]="r.deficit === 0" [class.deficit]="r.deficit > 0">
+          @if (!r.obrigada) {
+            <span class="valor"><mat-icon>check_circle</mat-icon>Isenta</span>
+            <span class="rotulo">menos de 7 funcionários na base — contratação facultativa</span>
+          } @else if (r.deficit > 0) {
+            <span class="valor"><mat-icon>error</mat-icon>{{ r.deficit | number: '1.0-0':'pt-BR' }}</span>
+            <span class="rotulo">aprendizes a contratar</span>
+          } @else {
+            <span class="valor"><mat-icon>check_circle</mat-icon>OK</span>
+            <span class="rotulo">cota mínima cumprida</span>
+          }
+        </div>
+      </div>
+
+      <div [hidden]="visao() !== 'geral'">
+        <div class="graficos">
+          <figure>
+            <figcaption>Composição do quadro informado ({{ r.totalPessoas }} funcionários)</figcaption>
+            <div class="area-grafico">
+              <canvas #graficoComposicao role="img" aria-label="Gráfico de rosca com a composição do quadro"></canvas>
+            </div>
+          </figure>
+          <figure>
+            <figcaption>Cota exigida × aprendizes atuais</figcaption>
+            <div class="area-grafico">
+              <canvas #graficoCota role="img" aria-label="Gráfico de barras comparando cota mínima, máxima e aprendizes atuais"></canvas>
+            </div>
+          </figure>
+        </div>
+      </div>
+
+      @if (visao() === 'detalhe') {
+        <div class="tabela-detalhe">
+          <table mat-table [dataSource]="r.itens">
+            <ng-container matColumnDef="codigo">
+              <th mat-header-cell *matHeaderCellDef>CBO</th>
+              <td mat-cell *matCellDef="let item" class="codigo">{{ item.codigo }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="titulo">
+              <th mat-header-cell *matHeaderCellDef>Título</th>
+              <td mat-cell *matCellDef="let item">
+                {{ item.titulo ?? 'CBO não encontrado' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Vínculo</th>
+              <td mat-cell *matCellDef="let item">{{ rotuloTipo(item) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="quantidade">
+              <th mat-header-cell *matHeaderCellDef class="numero">Qtd.</th>
+              <td mat-cell *matCellDef="let item" class="numero">{{ item.quantidade }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="situacao">
+              <th mat-header-cell *matHeaderCellDef>Entra na base?</th>
+              <td mat-cell *matCellDef="let item">
+                <span class="etiqueta" [class.sim]="item.entraNaBase" [class.nao]="!item.entraNaBase">
+                  {{ item.entraNaBase ? 'Sim' : 'Não' }}
+                </span>
+                <span class="motivo">{{ item.motivo }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="acoes">
+              <th mat-header-cell *matHeaderCellDef>Ações</th>
+              <td mat-cell *matCellDef="let item" class="acoes">
+                @if (item.podeExcluirManualmente) {
+                  <mat-slide-toggle
+                    [checked]="item.overrideExcluido"
+                    (change)="estado.alternarExclusaoManual(item.codigo)"
+                    matTooltip="Excluir da base como cargo de direção ou confiança"
+                  >
+                    Excluir
+                  </mat-slide-toggle>
+                }
+                <a
+                  matIconButton
+                  [href]="urlMte"
+                  target="_blank"
+                  rel="noopener"
+                  matTooltip="Conferir este CBO no site do MTE (busca pelo código)"
+                  aria-label="Abrir busca de CBO no site do MTE"
+                >
+                  <mat-icon>open_in_new</mat-icon>
+                </a>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+            <tr mat-row *matRowDef="let linha; columns: colunas" [class.linha-excluida]="!linha.entraNaBase"></tr>
+          </table>
+        </div>
+      }
+
+      <div class="exportar">
+        <span>Baixar relatório:</span>
+        <button matButton="outlined" (click)="exportador.baixarCsv(r)">
+          <mat-icon>description</mat-icon>
+          CSV
+        </button>
+        <button matButton="outlined" (click)="exportador.baixarXlsx(r)">
+          <mat-icon>table_view</mat-icon>
+          XLSX
+        </button>
+        <button matButton="outlined" (click)="exportador.baixarPdf(r)">
+          <mat-icon>picture_as_pdf</mat-icon>
+          PDF
+        </button>
+      </div>
+
+      <div class="avisos">
+        <p>
+          <mat-icon inline>info</mat-icon>
+          Estimativa baseada na CLT art. 429 e no Decreto 9.579/2018 (art. 52): a base considera as funções
+          que demandam formação profissional segundo a CBO, excluindo funções de nível técnico/superior e
+          cargos de direção ou gerência. Não substitui orientação jurídica ou da fiscalização do trabalho.
+        </p>
+        <p>
+          <mat-icon inline>info</mat-icon>
+          A obrigação só existe quando o estabelecimento tem 7 ou mais funcionários em funções que entram
+          na base; com menos, a contratação é facultativa. Microempresas, empresas de pequeno porte e
+          entidades sem fins lucrativos de formação profissional também são dispensadas. O cálculo é feito
+          por estabelecimento (CNPJ).
+        </p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+}
