@@ -24,6 +24,44 @@
     </mat-card-header>
 
     <mat-card-content>
+      @if (estado.resultados(); as todos) {
+        @if (todos.length > 1) {
+          <div class="filiais">
+            <h3>Por estabelecimento</h3>
+            <div class="tabela-filiais">
+              <table>
+                <thead>
+                  <tr>
+                    <th>CNPJ / estabelecimento</th>
+                    <th class="numero">Base</th>
+                    <th class="numero">Mínima</th>
+                    <th class="numero">Máxima</th>
+                    <th class="numero">Aprendizes</th>
+                    <th>Situação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (filial of todos; track $index) {
+                    <tr
+                      [class.selecionada]="$index === estado.filialSelecionada()"
+                      (click)="estado.filialSelecionada.set($index)"
+                    >
+                      <td>{{ filial.cnpj || 'Não informado' }}</td>
+                      <td class="numero">{{ filial.base }}</td>
+                      <td class="numero">{{ filial.minimo }}</td>
+                      <td class="numero">{{ filial.maximo }}</td>
+                      <td class="numero">{{ filial.aprendizesAtuais }}</td>
+                      <td>{{ situacaoDe(filial) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="dica-filial">Clique numa linha para ver o detalhe do estabelecimento abaixo.</p>
+          </div>
+          <h3 class="titulo-filial">{{ r.cnpj || 'Estabelecimento' }}</h3>
+        }
+      }
       <div class="cartoes-resumo">
         <div class="tile">
           <span class="valor">{{ r.base | number: '1.0-0':'pt-BR' }}</span>
@@ -41,8 +79,16 @@
           <span class="valor">{{ r.aprendizesAtuais | number: '1.0-0':'pt-BR' }}</span>
           <span class="rotulo">aprendizes atuais</span>
         </div>
-        <div class="tile situacao" [class.ok]="r.deficit === 0" [class.deficit]="r.deficit > 0">
-          @if (!r.obrigada) {
+        <div
+          class="tile situacao"
+          [class.ok]="r.deficit === 0 && r.excedente === 0"
+          [class.deficit]="r.deficit > 0"
+          [class.alerta]="r.excedente > 0"
+        >
+          @if (r.excedente > 0) {
+            <span class="valor"><mat-icon>warning</mat-icon>{{ r.excedente | number: '1.0-0':'pt-BR' }}</span>
+            <span class="rotulo">aprendizes ACIMA da cota máxima de 15%</span>
+          } @else if (!r.obrigada) {
             <span class="valor"><mat-icon>check_circle</mat-icon>Isenta</span>
             <span class="rotulo">menos de 7 funcionários na base — contratação facultativa</span>
           } @else if (r.deficit > 0) {
@@ -54,6 +100,15 @@
           }
         </div>
       </div>
+
+      @if (r.excedente > 0) {
+        <p class="aviso-excedente">
+          <mat-icon inline>warning</mat-icon>
+          Este estabelecimento tem {{ r.aprendizesAtuais }} aprendizes para uma cota máxima de
+          {{ r.maximo }} (15% da base). O excedente de {{ r.excedente }} não se enquadra na cota —
+          verifique os contratos com a fiscalização ou o setor jurídico.
+        </p>
+      }
 
       <div [hidden]="visao() !== 'geral'">
         <div class="graficos">
@@ -139,19 +194,29 @@
       }
 
       <div class="exportar">
-        <span>Baixar relatório:</span>
-        <button matButton="outlined" (click)="exportador.baixarCsv(r)">
+        <span>Baixar relatório{{ (estado.resultados()?.length ?? 0) > 1 ? ' (todos os estabelecimentos)' : '' }}:</span>
+        <button matButton="outlined" (click)="exportador.baixarCsv(estado.resultados()!)">
           <mat-icon>description</mat-icon>
           CSV
         </button>
-        <button matButton="outlined" (click)="exportador.baixarXlsx(r)">
+        <button matButton="outlined" (click)="exportador.baixarXlsx(estado.resultados()!)">
           <mat-icon>table_view</mat-icon>
           XLSX
         </button>
-        <button matButton="outlined" (click)="exportador.baixarPdf(r)">
+        <button matButton="outlined" (click)="exportador.baixarPdf(estado.resultados()!)">
           <mat-icon>picture_as_pdf</mat-icon>
           PDF
         </button>
+        <a
+          matButton="filled"
+          class="botao-contratar"
+          href="https://gerar.org.br/projeto/aprendiz-gerar/"
+          target="_blank"
+          rel="noopener"
+        >
+          <mat-icon>person_add</mat-icon>
+          Contratar aprendizes
+        </a>
       </div>
 
       <div class="avisos">

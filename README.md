@@ -18,6 +18,10 @@ EventBridge (cron 03:00 UTC = meia-noite BRT)
 
 - **App** (`app/`): Angular 22 + Angular Material (tema Cyan & Orange, claro/escuro), 100% estático.
   A base CBO (~2.700 ocupações) fica embutida como asset — sem backend em runtime.
+  Suporta **múltiplos estabelecimentos** (matriz/filiais): a cota é apurada por CNPJ, tanto no
+  formulário (um retângulo por filial, com campo de CNPJ opcional) quanto na importação
+  (coluna `CNPJ` opcional). O resultado avisa déficit, isenção (base < 7) e **extrapolação da
+  cota máxima de 15%**.
 - **Classificação**: entra na base quem está nos Grandes Grupos 4–9 da CBO; ficam fora GG 0
   (militares), 1 (direção/gerência), 2 (nível superior) e 3 (técnicos), além de aprendizes,
   estagiários e exclusões manuais (cargos de confiança). Consulta ao site do MTE não é feita em
@@ -27,8 +31,11 @@ EventBridge (cron 03:00 UTC = meia-noite BRT)
   `python scraper/scraper.py --local` para (re)gerar o `cbo.json`.
 - **Infra** (`infra/`): OpenTofu — Lambda + EventBridge + SSM (token do GitHub) + projeto
   Cloudflare Pages. Estado no S3.
-- **CI/CD** (`.github/workflows/`): `deploy-pages.yml` (testes, build e deploy do app) e
-  `tofu.yml` (plan/apply da infra via OIDC, sem chaves de longa duração).
+- **CI/CD** (`.github/workflows/`): deploys separados por branch —
+  `deploy-pages.yml` roda em push na **`main`** (testes, build e deploy do app; é o que o commit
+  do bot dispara) e `tofu.yml` roda em push na branch **`infra`** (plan/apply via OIDC, sem
+  chaves de longa duração; PRs mostram só o plan). Assim, o commit noturno do scraper na main
+  nunca mexe na infraestrutura.
 
 ## Desenvolvimento local
 
@@ -42,15 +49,18 @@ npm run build    # build de produção em dist/cota-aprendiz/browser
 
 ## Configuração do deploy (uma vez)
 
-1. **Bootstrap AWS** (cria bucket de estado + role OIDC para o GitHub Actions):
+1. **Bootstrap AWS** (cria o provider OIDC + a role para o GitHub Actions; as permissões da
+   role estão em [permissoes-github-actions.json.tftpl](infra/bootstrap/permissoes-github-actions.json.tftpl)):
 
    ```bash
    cd infra/bootstrap
    tofu init
-   tofu apply -var "github_repo=SEU_USUARIO/SEU_REPO" -var "state_bucket=NOME-GLOBALMENTE-UNICO"
+   tofu apply -var "github_repo=SEU_USUARIO/SEU_REPO"
    ```
 
-   Anote as saídas `aws_role_arn` e `tf_state_bucket`.
+   Anote a saída `aws_role_arn`. O bucket do estado **não precisa ser criado**: o workflow
+   calcula o nome determinístico `org-repo-contaAWS-regiao-tf-state` e cria o bucket na
+   primeira execução, se não existir.
 
 2. **PAT do GitHub para a Lambda**: crie um fine-grained PAT com permissão `Contents: Read and write`
    **apenas neste repositório** (a Lambda usa para commitar o `cbo.json`).
@@ -59,8 +69,9 @@ npm run build    # build de produção em dist/cota-aprendiz/browser
 
    | Secret | Valor |
    |---|---|
-   | `CLOUDFLARE_API_TOKEN` | Token da Cloudflare com permissão *Cloudflare Pages: Edit* |
+   | `CLOUDFLARE_API_TOKEN` | Token da Cloudflare com permissão *Cloudflare Pages: Edit* (+ *DNS: Edit* se usar domínio próprio) |
    | `CLOUDFLARE_ACCOUNT_ID` | Account ID da Cloudflare |
+   | `CLOUDFLARE_ZONE_ID` | (opcional) Zone ID do domínio, para criar o CNAME do domínio próprio |
    | `AWS_ROLE_ARN` | Saída `aws_role_arn` do bootstrap |
    | `GH_PAT_CBO_BOT` | O PAT do passo 2 |
 
@@ -68,11 +79,13 @@ npm run build    # build de produção em dist/cota-aprendiz/browser
 
    | Variable | Valor |
    |---|---|
-   | `TF_STATE_BUCKET` | Saída `tf_state_bucket` do bootstrap |
    | `AWS_REGION` | (opcional) região AWS — padrão `sa-east-1` |
+   | `DOMINIO_SITE` | (opcional) domínio próprio do site, ex.: `cota.exemplo.com.br` |
 
-4. Faça push na `main`: o `tofu.yml` provisiona Lambda/EventBridge/Pages e o `deploy-pages.yml`
-   publica o site em `https://cota-aprendiz.pages.dev`.
+4. Crie a branch **`infra`** e faça push nela: o `tofu.yml` cria o bucket de estado (se
+   preciso) e provisiona Lambda/EventBridge/Pages. Push na **`main`** com mudanças em `app/**`
+   dispara o `deploy-pages.yml`, que publica o site em `https://cota-aprendiz.pages.dev`
+   (ou no `DOMINIO_SITE`, se definido).
 
 Para testar a Lambda sem esperar a meia-noite:
 `aws lambda invoke --function-name cota-aprendiz-atualiza-cbo /dev/stdout`

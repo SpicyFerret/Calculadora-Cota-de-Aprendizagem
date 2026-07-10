@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { CboService } from './cbo.service';
-import { ItemResultado, LinhaQuadro, ResultadoCalculo } from './modelos';
+import { GrupoEstabelecimento, ItemResultado, LinhaQuadro, ResultadoCalculo } from './modelos';
 
 const PERCENTUAL_MINIMO = 5;
 const PERCENTUAL_MAXIMO = 15;
@@ -23,6 +23,7 @@ export class CalculoService {
     linhas: LinhaQuadro[],
     excluidosManualmente: ReadonlySet<string>,
     aoProgredir?: (percentual: number) => void,
+    cnpj = '',
   ): Promise<ResultadoCalculo> {
     const agregadas = this.agregar(linhas);
     const itens: ItemResultado[] = [];
@@ -36,7 +37,26 @@ export class CalculoService {
     }
     aoProgredir?.(100);
 
-    return this.consolidar(itens);
+    return this.consolidar(itens, cnpj);
+  }
+
+  /** A cota é apurada por estabelecimento (CNPJ): um resultado por grupo. */
+  async calcularGrupos(
+    grupos: GrupoEstabelecimento[],
+    aoProgredir?: (percentual: number) => void,
+  ): Promise<ResultadoCalculo[]> {
+    const resultados: ResultadoCalculo[] = [];
+    for (let g = 0; g < grupos.length; g++) {
+      const resultado = await this.calcular(
+        grupos[g].linhas,
+        new Set(),
+        (p) => aoProgredir?.(Math.round(((g + p / 100) / grupos.length) * 100)),
+        grupos[g].cnpj,
+      );
+      resultados.push(resultado);
+    }
+    aoProgredir?.(100);
+    return resultados;
   }
 
   /** Recalcula de forma síncrona (usado ao alternar exclusões manuais). */
@@ -50,7 +70,7 @@ export class CalculoService {
       quantidade: i.quantidade,
     }));
     const itens = linhas.map((l) => this.classificarLinha(l, excluidosManualmente));
-    return this.consolidar(itens);
+    return this.consolidar(itens, resultado.cnpj);
   }
 
   /** Soma quantidades de linhas repetidas (mesmo CBO + tipo). */
@@ -113,7 +133,7 @@ export class CalculoService {
     return { ...comum, entraNaBase: true, podeExcluirManualmente: true, motivo: classificacao.motivo };
   }
 
-  private consolidar(itens: ItemResultado[]): ResultadoCalculo {
+  private consolidar(itens: ItemResultado[], cnpj: string): ResultadoCalculo {
     let base = 0;
     let aprendizesAtuais = 0;
     let totalPessoas = 0;
@@ -148,8 +168,10 @@ export class CalculoService {
     const minimo = obrigada ? Math.ceil((base * PERCENTUAL_MINIMO) / 100) : 0;
     const maximo = Math.ceil((base * PERCENTUAL_MAXIMO) / 100);
     const deficit = Math.max(0, minimo - aprendizesAtuais);
+    const excedente = Math.max(0, aprendizesAtuais - maximo);
 
     return {
+      cnpj,
       itens,
       totalPessoas,
       base,
@@ -158,6 +180,7 @@ export class CalculoService {
       maximo,
       aprendizesAtuais,
       deficit,
+      excedente,
       composicao,
       calculadoEm: new Date(),
     };

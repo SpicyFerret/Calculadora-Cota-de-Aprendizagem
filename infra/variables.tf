@@ -31,3 +31,15 @@ variable "pages_project_name" {
   type        = string
   default     = "cota-aprendiz"
 }
+
+variable "dominio_site" {
+  description = "Domínio customizado do site no Cloudflare Pages (ex.: cota.exemplo.com.br); vazio = usa apenas <projeto>.pages.dev"
+  type        = string
+  default     = ""
+}
+
+variable "cloudflare_zone_id" {
+  description = "Zone ID da Cloudflare do domínio (necessário para criar o registro DNS quando dominio_site é definido)"
+  type        = string
+  default     = ""
+}

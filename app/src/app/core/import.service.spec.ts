@@ -40,12 +40,30 @@ describe('ImportService', () => {
     );
     expect(r.formato).toBe('agregado');
     expect(r.erros).toEqual([]);
-    expect(r.linhas).toEqual([
+    expect(r.grupos.length).toBe(1);
+    expect(r.grupos[0].cnpj).toBe('');
+    expect(r.grupos[0].linhas).toEqual([
       { cbo: '411010', tipo: 'CLT', quantidade: 12 },
       { cbo: '411010', tipo: 'PCD', quantidade: 1 },
       { cbo: '514320', tipo: 'ESTAGIARIO', quantidade: 2 },
       { cbo: '212405', tipo: 'APRENDIZ', quantidade: 1 },
     ]);
+  });
+
+  it('separa estabelecimentos pela coluna CNPJ opcional', async () => {
+    const r = await servico.importarPlanilha(
+      planilha([
+        ['CNPJ', 'CBO', 'TIPO', 'QUANTIDADE'],
+        ['11111111000111', '411010', 'CLT', 8],
+        ['11.111.111/0002-22', '514320', 'CLT', 5],
+        ['11111111000111', '514320', 'CLT', 2],
+      ]),
+    );
+    expect(r.erros).toEqual([]);
+    expect(r.grupos.length).toBe(2);
+    expect(r.grupos[0].cnpj).toBe('11.111.111/0001-11'); // máscara aplicada
+    expect(r.grupos[0].linhas.length).toBe(2);
+    expect(r.grupos[1].cnpj).toBe('11.111.111/0002-22');
   });
 
   it('importa o formato lista (NOME;CBO;TIPO), 1 pessoa por linha', async () => {
@@ -59,8 +77,8 @@ describe('ImportService', () => {
     );
     expect(r.formato).toBe('lista');
     expect(r.erros).toEqual([]);
-    expect(r.linhas.length).toBe(3);
-    expect(r.linhas.every((l) => l.quantidade === 1)).toBe(true);
+    expect(r.grupos[0].linhas.length).toBe(3);
+    expect(r.grupos[0].linhas.every((l) => l.quantidade === 1)).toBe(true);
   });
 
   it('acusa erros por linha sem derrubar a importação', async () => {
@@ -74,14 +92,14 @@ describe('ImportService', () => {
         ['514320', 'CLT', 0], // quantidade inválida
       ]),
     );
-    expect(r.linhas.length).toBe(1);
+    expect(r.grupos[0].linhas.length).toBe(1);
     expect(r.erros.length).toBe(4);
     expect(r.erros[0]).toContain('Linha 3');
   });
 
   it('rejeita cabeçalho sem as colunas obrigatórias', async () => {
     const r = await servico.importarPlanilha(planilha([['A', 'B'], ['1', '2']]));
-    expect(r.linhas).toEqual([]);
+    expect(r.grupos).toEqual([]);
     expect(r.erros[0]).toContain('Cabeçalho');
   });
 });

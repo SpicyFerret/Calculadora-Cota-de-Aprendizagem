@@ -1,9 +1,11 @@
 # Bootstrap — aplicar UMA vez, localmente, com credenciais AWS de admin:
 #   cd infra/bootstrap
-#   tofu init && tofu apply -var "github_repo=usuario/repositorio" -var "state_bucket=NOME-UNICO"
+#   tofu init && tofu apply -var "github_repo=usuario/repositorio"
 #
-# Cria o bucket de estado e a role OIDC que o GitHub Actions assume
-# (sem chaves de longa duração). O estado deste bootstrap fica local.
+# Cria o provider OIDC e a role que o GitHub Actions assume (sem chaves de
+# longa duração). O bucket do estado NÃO é criado aqui: o workflow tofu.yml
+# calcula o nome determinístico (org-repo-conta-regiao-tf-state) e cria o
+# bucket na primeira execução, se não existir. O estado deste bootstrap é local.
 
 terraform {
   required_version = ">= 1.8"
@@ -25,32 +27,28 @@ variable "github_repo" {
   type        = string
 }
 
-variable "state_bucket" {
-  description = "Nome (globalmente único) do bucket S3 para o estado do Tofu"
-  type        = string
-}
-
 provider "aws" {
   region = var.aws_region
 }
 
-resource "aws_s3_bucket" "estado" {
-  bucket = var.state_bucket
-}
+data "aws_caller_identity" "atual" {}
 
-resource "aws_s3_bucket_versioning" "estado" {
-  bucket = aws_s3_bucket.estado.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "estado" {
-  bucket                  = aws_s3_bucket.estado.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+locals {
+  # Mesmo nome calculado pelo workflow: org-repo-conta-regiao-tf-state,
+  # minúsculo, com / _ . trocados por hífen, truncado em 63 caracteres.
+  nome_bucket_estado = substr(
+    replace(
+      replace(
+        replace(
+          lower("${var.github_repo}-${data.aws_caller_identity.atual.account_id}-${var.aws_region}-tf-state"),
+          "/", "-"
+        ),
+        "_", "-"
+      ),
+      ".", "-"
+    ),
+    0, 63
+  )
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
@@ -84,41 +82,13 @@ resource "aws_iam_role" "github_actions" {
   assume_role_policy = data.aws_iam_policy_document.github_assume.json
 }
 
-data "aws_iam_policy_document" "github_permissoes" {
-  statement {
-    sid = "Estado"
-    actions = [
-      "s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket",
-    ]
-    resources = [
-      aws_s3_bucket.estado.arn,
-      "${aws_s3_bucket.estado.arn}/*",
-    ]
-  }
-
-  statement {
-    sid = "GerenciarInfra"
-    actions = [
-      "lambda:*",
-      "events:*",
-      "logs:*",
-      "ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter",
-      "ssm:DeleteParameter", "ssm:DescribeParameters", "ssm:AddTagsToResource",
-      "ssm:ListTagsForResource",
-      "iam:GetRole", "iam:CreateRole", "iam:DeleteRole", "iam:UpdateRole",
-      "iam:PassRole", "iam:TagRole", "iam:ListRolePolicies", "iam:GetRolePolicy",
-      "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:ListAttachedRolePolicies",
-      "iam:ListInstanceProfilesForRole",
-      "kms:DescribeKey",
-    ]
-    resources = ["*"]
-  }
-}
-
+# Permissões da role em arquivo JSON versionado (permissoes-github-actions.json.tftpl)
 resource "aws_iam_role_policy" "github_actions" {
-  name   = "permissoes"
-  role   = aws_iam_role.github_actions.id
-  policy = data.aws_iam_policy_document.github_permissoes.json
+  name = "permissoes"
+  role = aws_iam_role.github_actions.id
+  policy = templatefile("${path.module}/permissoes-github-actions.json.tftpl", {
+    bucket_arn = "arn:aws:s3:::${local.nome_bucket_estado}"
+  })
 }
 
 output "aws_role_arn" {
@@ -126,7 +96,7 @@ output "aws_role_arn" {
   value       = aws_iam_role.github_actions.arn
 }
 
-output "tf_state_bucket" {
-  description = "Colocar na variable TF_STATE_BUCKET do repositório"
-  value       = aws_s3_bucket.estado.bucket
+output "bucket_estado" {
+  description = "Nome do bucket que o workflow criará/usará para o estado"
+  value       = local.nome_bucket_estado
 }

@@ -25,6 +25,13 @@ export interface LinhaQuadro {
   quantidade: number;
 }
 
+/** Um estabelecimento (matriz ou filial): a cota é apurada por CNPJ. */
+export interface GrupoEstabelecimento {
+  /** CNPJ ou rótulo livre; vazio = não informado. */
+  cnpj: string;
+  linhas: LinhaQuadro[];
+}
+
 export interface Classificacao {
   entra: boolean;
   grandeGrupo: number;
@@ -53,6 +60,8 @@ export interface ComposicaoQuadro {
 }
 
 export interface ResultadoCalculo {
+  /** CNPJ/rótulo do estabelecimento; vazio quando não informado. */
+  cnpj: string;
   itens: ItemResultado[];
   totalPessoas: number;
   base: number;
@@ -62,6 +71,8 @@ export interface ResultadoCalculo {
   maximo: number;
   aprendizesAtuais: number;
   deficit: number;
+  /** Aprendizes acima da cota máxima de 15% (extrapolação). */
+  excedente: number;
   composicao: ComposicaoQuadro;
   calculadoEm: Date;
 }

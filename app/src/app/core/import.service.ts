@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { CboService } from './cbo.service';
-import { LinhaQuadro, TipoVinculo } from './modelos';
+import { GrupoEstabelecimento, TipoVinculo } from './modelos';
 
 export interface ResultadoImportacao {
-  linhas: LinhaQuadro[];
+  /** Linhas válidas agrupadas por estabelecimento (coluna CNPJ opcional). */
+  grupos: GrupoEstabelecimento[];
   erros: string[];
   formato: 'agregado' | 'lista';
 }
@@ -27,6 +28,7 @@ export class ImportService {
    * Lê CSV ou XLSX. Dois formatos, detectados pelo cabeçalho:
    *  - agregado: CBO; TIPO; QUANTIDADE
    *  - lista:    [NOME;] CBO; TIPO   (cada linha = 1 pessoa)
+   * Uma coluna CNPJ opcional separa os estabelecimentos (matriz/filiais).
    */
   async lerArquivo(arquivo: File): Promise<ResultadoImportacao> {
     const buffer = await arquivo.arrayBuffer();
@@ -49,23 +51,26 @@ export class ImportService {
   private interpretar(matriz: string[][]): ResultadoImportacao {
     const semVazias = matriz.filter((linha) => linha.some((celula) => celula !== ''));
     if (semVazias.length < 2) {
-      return { linhas: [], erros: ['Arquivo vazio ou sem linhas de dados.'], formato: 'agregado' };
+      return { grupos: [], erros: ['Arquivo vazio ou sem linhas de dados.'], formato: 'agregado' };
     }
 
     const cabecalho = semVazias[0].map((c) => this.normalizarTexto(c));
     const colCbo = cabecalho.findIndex((c) => c === 'cbo' || c.startsWith('cbo '));
     const colTipo = cabecalho.findIndex((c) => c === 'tipo' || c === 'vinculo');
     const colQuantidade = cabecalho.findIndex((c) => c === 'quantidade' || c === 'qtd' || c === 'qtde');
+    const colCnpj = cabecalho.findIndex((c) => c === 'cnpj' || c === 'estabelecimento' || c === 'filial');
     if (colCbo < 0 || colTipo < 0) {
       return {
-        linhas: [],
-        erros: ['Cabeçalho não reconhecido: são necessárias as colunas CBO e TIPO (QUANTIDADE opcional).'],
+        grupos: [],
+        erros: [
+          'Cabeçalho não reconhecido: são necessárias as colunas CBO e TIPO (QUANTIDADE e CNPJ opcionais).',
+        ],
         formato: 'agregado',
       };
     }
     const formato = colQuantidade >= 0 ? 'agregado' : 'lista';
 
-    const linhas: LinhaQuadro[] = [];
+    const grupos = new Map<string, GrupoEstabelecimento>();
     const erros: string[] = [];
     semVazias.slice(1).forEach((valores, indice) => {
       const numeroLinha = indice + 2; // 1-based + cabeçalho
@@ -73,6 +78,7 @@ export class ImportService {
       const tipo = TIPOS_RECONHECIDOS[this.normalizarTexto(valores[colTipo] ?? '')];
       const quantidade =
         formato === 'agregado' ? Number(valores[colQuantidade]?.replace(',', '.')) : 1;
+      const cnpj = colCnpj >= 0 ? this.normalizarCnpj(valores[colCnpj] ?? '') : '';
 
       if (codigo.length !== 6) {
         erros.push(`Linha ${numeroLinha}: CBO "${valores[colCbo]}" inválido (esperados 6 dígitos).`);
@@ -92,10 +98,22 @@ export class ImportService {
         erros.push(`Linha ${numeroLinha}: quantidade "${valores[colQuantidade]}" inválida.`);
         return;
       }
-      linhas.push({ cbo: codigo, tipo, quantidade });
+
+      const grupo = grupos.get(cnpj) ?? { cnpj, linhas: [] };
+      grupo.linhas.push({ cbo: codigo, tipo, quantidade });
+      grupos.set(cnpj, grupo);
     });
 
-    return { linhas, erros, formato };
+    return { grupos: [...grupos.values()], erros, formato };
+  }
+
+  /** Máscara padrão quando são 14 dígitos; senão mantém o texto como rótulo. */
+  private normalizarCnpj(texto: string): string {
+    const digitos = texto.replace(/\D/g, '');
+    if (digitos.length === 14) {
+      return `${digitos.slice(0, 2)}.${digitos.slice(2, 5)}.${digitos.slice(5, 8)}/${digitos.slice(8, 12)}-${digitos.slice(12)}`;
+    }
+    return texto.trim();
   }
 
   /** minúsculas, sem acentos */

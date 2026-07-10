@@ -1,8 +1,41 @@
+// Retângulo por estabelecimento; o CNPJ fica na borda superior, à esquerda,
+// como legenda do fieldset.
+.grupo-filial {
+  position: relative;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  padding: 4px 16px 12px;
+  margin: 22px 0 0;
+
+  legend {
+    margin-left: 12px;
+    padding: 0 6px;
+
+    .campo-cnpj {
+      width: 230px;
+      background: var(--mat-sys-surface);
+      border-radius: 6px;
+    }
+  }
+
+  // Sobre a linha da borda superior, à direita — espelhando o campo de CNPJ.
+  .remover-grupo {
+    position: absolute;
+    top: -34px;
+    right: 16px;
+    background: var(--mat-sys-surface);
+  }
+
+  .botao-linha {
+    margin-top: 10px;
+  }
+}
+
 .linhas {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .linha {
@@ -72,9 +105,38 @@
     height: 40px;
     color: var(--mat-sys-primary);
   }
+}
 
-  a {
-    color: var(--mat-sys-primary);
+.modelos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  align-items: center;
+
+  .modelo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    .descricao {
+      color: var(--mat-sys-on-surface-variant);
+      font-size: 0.85rem;
+
+      code {
+        background: var(--mat-sys-surface-container-high);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+    }
+
+    .botao-modelo {
+      mat-icon {
+        margin-right: 4px;
+      }
+    }
   }
 }
 

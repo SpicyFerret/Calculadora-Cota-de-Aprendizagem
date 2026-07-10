@@ -1,6 +1,6 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { CalculoService } from './calculo.service';
-import { LinhaQuadro, ResultadoCalculo } from './modelos';
+import { GrupoEstabelecimento, ResultadoCalculo } from './modelos';
 
 /** Duração mínima da barra de progresso, para o feedback ser perceptível. */
 const DURACAO_MINIMA_MS = 500;
@@ -11,47 +11,57 @@ export class EstadoService {
 
   readonly processando = signal(false);
   readonly progresso = signal(0);
-  readonly resultado = signal<ResultadoCalculo | null>(null);
-  readonly excluidosManualmente = signal<ReadonlySet<string>>(new Set());
+  /** Um resultado por estabelecimento (CNPJ). */
+  readonly resultados = signal<ResultadoCalculo[] | null>(null);
+  readonly filialSelecionada = signal(0);
+  /** Resultado do estabelecimento selecionado (dashboard/tabela). */
+  readonly resultado = computed(() => this.resultados()?.[this.filialSelecionada()] ?? null);
 
-  async calcular(linhas: LinhaQuadro[]): Promise<void> {
+  /** Exclusões manuais (cargo de confiança), por estabelecimento. */
+  private excluidosPorFilial = new Map<number, Set<string>>();
+
+  async calcular(grupos: GrupoEstabelecimento[]): Promise<void> {
     this.processando.set(true);
     this.progresso.set(0);
-    this.resultado.set(null);
-    this.excluidosManualmente.set(new Set());
+    this.resultados.set(null);
+    this.filialSelecionada.set(0);
+    this.excluidosPorFilial.clear();
     const inicio = performance.now();
     try {
-      const resultado = await this.calculo.calcular(linhas, new Set(), (p) =>
-        this.progresso.set(p),
-      );
+      const resultados = await this.calculo.calcularGrupos(grupos, (p) => this.progresso.set(p));
       const decorrido = performance.now() - inicio;
       if (decorrido < DURACAO_MINIMA_MS) {
         await new Promise((r) => setTimeout(r, DURACAO_MINIMA_MS - decorrido));
       }
-      this.resultado.set(resultado);
+      this.resultados.set(resultados);
     } finally {
       this.processando.set(false);
     }
   }
 
   alternarExclusaoManual(codigo: string): void {
-    const resultado = this.resultado();
-    if (!resultado) {
+    const indice = this.filialSelecionada();
+    const atual = this.resultados()?.[indice];
+    if (!atual) {
       return;
     }
-    const novo = new Set(this.excluidosManualmente());
-    if (novo.has(codigo)) {
-      novo.delete(codigo);
+    const excluidos = this.excluidosPorFilial.get(indice) ?? new Set<string>();
+    if (excluidos.has(codigo)) {
+      excluidos.delete(codigo);
     } else {
-      novo.add(codigo);
+      excluidos.add(codigo);
     }
-    this.excluidosManualmente.set(novo);
-    this.resultado.set(this.calculo.recalcular(resultado, novo));
+    this.excluidosPorFilial.set(indice, excluidos);
+    const recalculado = this.calculo.recalcular(atual, excluidos);
+    this.resultados.update((todos) =>
+      (todos ?? []).map((r, i) => (i === indice ? recalculado : r)),
+    );
   }
 
   limpar(): void {
-    this.resultado.set(null);
-    this.excluidosManualmente.set(new Set());
+    this.resultados.set(null);
+    this.filialSelecionada.set(0);
+    this.excluidosPorFilial.clear();
     this.progresso.set(0);
   }
 }

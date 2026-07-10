@@ -89,6 +89,16 @@ export class Resultado {
     return TIPOS.find((t) => t.valor === item.tipo)?.rotulo ?? item.tipo;
   }
 
+  situacaoDe(r: ResultadoCalculo): string {
+    if (r.excedente > 0) {
+      return `${r.excedente} acima da máxima`;
+    }
+    if (!r.obrigada) {
+      return 'Isenta (base < 7)';
+    }
+    return r.deficit > 0 ? `Déficit de ${r.deficit}` : 'Cota cumprida';
+  }
+
   /**
    * Resolve uma expressão de cor CSS (var(), light-dark()) para rgb() computado —
    * o canvas não entende light-dark(), então ler a custom property crua não basta.

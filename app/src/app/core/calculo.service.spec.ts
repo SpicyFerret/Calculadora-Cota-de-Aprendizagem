@@ -92,6 +92,29 @@ describe('CalculoService', () => {
     expect(r.deficit).toBe(3);
   });
 
+  it('acusa excedente quando os aprendizes passam da cota máxima', async () => {
+    const r = await calcular([
+      { cbo: '411010', tipo: 'CLT', quantidade: 20 }, // máxima = ceil(3) = 3
+      { cbo: '411010', tipo: 'APRENDIZ', quantidade: 5 },
+    ]);
+    expect(r.maximo).toBe(3);
+    expect(r.excedente).toBe(2);
+    expect(r.deficit).toBe(0);
+  });
+
+  it('calcula a cota por estabelecimento (CNPJ), não pelo total', async () => {
+    const grupos = [
+      { cnpj: '11.111.111/0001-11', linhas: [{ cbo: '411010', tipo: 'CLT' as const, quantidade: 7 }] },
+      { cnpj: '11.111.111/0002-22', linhas: [{ cbo: '514320', tipo: 'CLT' as const, quantidade: 6 }] },
+    ];
+    const resultados = await servico.calcularGrupos(grupos);
+    expect(resultados.length).toBe(2);
+    expect(resultados[0].cnpj).toBe('11.111.111/0001-11');
+    expect(resultados[0].minimo).toBe(1); // 7 na base → obrigada
+    expect(resultados[1].obrigada).toBe(false); // 6 na base → isenta
+    expect(resultados[1].minimo).toBe(0);
+  });
+
   it('déficit zero quando a cota mínima está cumprida', async () => {
     const r = await calcular([
       { cbo: '411010', tipo: 'CLT', quantidade: 20 },

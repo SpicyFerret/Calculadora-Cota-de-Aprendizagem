@@ -3,6 +3,7 @@
     <mat-card-title>Quadro de funcionários</mat-card-title>
     <mat-card-subtitle>
       Informe os funcionários por CBO e vínculo — pelo formulário ou importando uma planilha.
+      Tem filiais? A cota é apurada por estabelecimento (CNPJ).
     </mat-card-subtitle>
   </mat-card-header>
 
@@ -15,63 +16,95 @@
     } @else {
       <mat-tab-group [selectedIndex]="abaAtiva()" (selectedIndexChange)="abaAtiva.set($event)">
         <mat-tab label="Formulário">
-          <div class="linhas">
-            @for (linha of linhas(); track $index) {
-              <div class="linha">
-                <mat-form-field class="campo-cbo" appearance="outline" subscriptSizing="dynamic">
-                  <mat-label>CBO (código ou título)</mat-label>
+          @for (grupo of grupos(); track grupo) {
+            <fieldset class="grupo-filial">
+              <legend>
+                <mat-form-field class="campo-cnpj" appearance="outline" subscriptSizing="dynamic">
                   <input
                     matInput
-                    [(ngModel)]="linha.cbo"
-                    (input)="aoDigitarCbo(linha.cbo)"
-                    [matAutocomplete]="autoCbo"
-                    placeholder="Ex.: 411010 ou recepcionista"
+                    [(ngModel)]="grupo.cnpj"
+                    placeholder="CNPJ (opcional)"
+                    aria-label="CNPJ (opcional)"
                   />
-                  <mat-autocomplete #autoCbo="matAutocomplete">
-                    @for (opcao of opcoes(); track opcao.codigo) {
-                      <mat-option [value]="opcao.codigo">
-                        <span class="opcao-codigo">{{ opcao.codigo }}</span> {{ opcao.titulo }}
-                      </mat-option>
-                    }
-                  </mat-autocomplete>
-                  @if (tituloDe(linha.cbo); as titulo) {
-                    <mat-hint>{{ titulo }}</mat-hint>
-                  } @else if (cboInvalido(linha.cbo)) {
-                    <mat-hint class="hint-erro">CBO não encontrado na base oficial</mat-hint>
-                  }
                 </mat-form-field>
+              </legend>
 
-                <mat-form-field class="campo-tipo" appearance="outline" subscriptSizing="dynamic">
-                  <mat-label>Vínculo</mat-label>
-                  <mat-select [(ngModel)]="linha.tipo">
-                    @for (tipo of tipos; track tipo.valor) {
-                      <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field class="campo-qtd" appearance="outline" subscriptSizing="dynamic">
-                  <mat-label>Qtd.</mat-label>
-                  <input matInput type="number" min="1" step="1" [(ngModel)]="linha.quantidade" />
-                </mat-form-field>
-
+              @if (grupos().length > 1) {
                 <button
                   matIconButton
-                  class="remover"
-                  (click)="removerLinha($index)"
-                  [disabled]="linhas().length === 1"
-                  aria-label="Remover linha"
+                  class="remover-grupo"
+                  (click)="removerGrupo($index)"
+                  matTooltip="Remover este estabelecimento"
+                  aria-label="Remover este estabelecimento"
                 >
-                  <mat-icon>delete</mat-icon>
+                  <mat-icon>close</mat-icon>
                 </button>
+              }
+
+              <div class="linhas">
+                @for (linha of grupo.linhas; track linha) {
+                  <div class="linha">
+                    <mat-form-field class="campo-cbo" appearance="outline" subscriptSizing="dynamic">
+                      <mat-label>CBO (código ou título)</mat-label>
+                      <input
+                        matInput
+                        [(ngModel)]="linha.cbo"
+                        (input)="aoDigitarCbo(linha.cbo)"
+                        [matAutocomplete]="autoCbo"
+                        placeholder="Ex.: 411010 ou recepcionista"
+                      />
+                      <mat-autocomplete #autoCbo="matAutocomplete">
+                        @for (opcao of opcoes(); track opcao.codigo) {
+                          <mat-option [value]="opcao.codigo">
+                            <span class="opcao-codigo">{{ opcao.codigo }}</span> {{ opcao.titulo }}
+                          </mat-option>
+                        }
+                      </mat-autocomplete>
+                      @if (tituloDe(linha.cbo); as titulo) {
+                        <mat-hint>{{ titulo }}</mat-hint>
+                      } @else if (cboInvalido(linha.cbo)) {
+                        <mat-hint class="hint-erro">CBO não encontrado na base oficial</mat-hint>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field class="campo-tipo" appearance="outline" subscriptSizing="dynamic">
+                      <mat-label>Vínculo</mat-label>
+                      <mat-select [(ngModel)]="linha.tipo">
+                        @for (tipo of tipos; track tipo.valor) {
+                          <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field class="campo-qtd" appearance="outline" subscriptSizing="dynamic">
+                      <mat-label>Qtd.</mat-label>
+                      <input matInput type="number" min="1" step="1" [(ngModel)]="linha.quantidade" />
+                    </mat-form-field>
+
+                    <button
+                      matIconButton
+                      class="remover"
+                      (click)="removerLinha(grupo, $index)"
+                      [disabled]="grupo.linhas.length === 1"
+                      aria-label="Remover linha"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                }
               </div>
-            }
-          </div>
+
+              <button matButton class="botao-linha" (click)="adicionarLinha(grupo)">
+                <mat-icon>add</mat-icon>
+                Adicionar linha
+              </button>
+            </fieldset>
+          }
 
           <div class="acoes-linhas">
-            <button matButton (click)="adicionarLinha()">
-              <mat-icon>add</mat-icon>
-              Adicionar linha
+            <button matButton="outlined" (click)="adicionarGrupo()">
+              <mat-icon>add_business</mat-icon>
+              Adicionar filial
             </button>
             <span class="contagem">{{ totalPessoas() }} funcionário(s) com CBO válido</span>
           </div>
@@ -90,13 +123,38 @@
             <button matButton="outlined" (click)="seletor.click()">Escolher arquivo</button>
             <input #seletor type="file" accept=".csv,.xlsx,.xls" hidden (change)="aoEscolherArquivo($event)" />
             <p class="dica">
-              Formatos aceitos: <code>CBO;TIPO;QUANTIDADE</code> (agregado) ou
-              <code>NOME;CBO;TIPO</code> (um funcionário por linha). Tipos: CLT, PCD, Estagiário, Aprendiz.
+              Tipos aceitos: CLT, PCD, Estagiário, Aprendiz.
+              Uma coluna <code>CNPJ</code> opcional separa matriz e filiais.
             </p>
-            <p class="dica">
-              Modelos: <a href="modelos/modelo.csv" download>modelo.csv</a> ·
-              <a href="modelos/modelo.xlsx" download>modelo.xlsx</a>
-            </p>
+
+            <div class="modelos">
+              <div class="modelo">
+                <span class="descricao">
+                  Modelo por quantidade — <code>CNPJ;CBO;TIPO;QUANTIDADE</code>
+                </span>
+                <a matButton="outlined" class="botao-modelo" href="modelos/modelo-quantidade.csv" download>
+                  <mat-icon>download</mat-icon>
+                  CSV
+                </a>
+                <a matButton="outlined" class="botao-modelo" href="modelos/modelo-quantidade.xlsx" download>
+                  <mat-icon>download</mat-icon>
+                  XLSX
+                </a>
+              </div>
+              <div class="modelo">
+                <span class="descricao">
+                  Modelo por nome (1 funcionário por linha) — <code>CNPJ;NOME;CBO;TIPO</code>
+                </span>
+                <a matButton="outlined" class="botao-modelo" href="modelos/modelo-nome.csv" download>
+                  <mat-icon>download</mat-icon>
+                  CSV
+                </a>
+                <a matButton="outlined" class="botao-modelo" href="modelos/modelo-nome.xlsx" download>
+                  <mat-icon>download</mat-icon>
+                  XLSX
+                </a>
+              </div>
+            </div>
           </div>
 
           @if (lendoArquivo()) {
@@ -106,8 +164,13 @@
           @if (importacao(); as imp) {
             <div class="resumo-importacao">
               <p>
-                <strong>{{ imp.linhas.length }}</strong> linha(s) válida(s)
-                ({{ pessoasImportadas() }} funcionário(s), formato {{ imp.formato === 'agregado' ? 'agregado' : 'lista de funcionários' }}).
+                <strong>{{ linhasImportadas() }}</strong> linha(s) válida(s)
+                ({{ pessoasImportadas() }} funcionário(s),
+                {{ imp.grupos.length }} estabelecimento(s),
+                formato {{ imp.formato === 'agregado' ? 'agregado' : 'lista de funcionários' }}).
+                @if (imp.grupos.length > 0) {
+                  O formulário foi atualizado com esses dados.
+                }
               </p>
               @if (imp.erros.length > 0) {
                 <details class="erros" open>
@@ -119,7 +182,7 @@
                   </ul>
                 </details>
               }
-              @if (imp.linhas.length > 0) {
+              @if (imp.grupos.length > 0) {
                 <div class="acoes-importacao">
                   <button matButton="outlined" (click)="editarNoFormulario()">
                     <mat-icon>edit</mat-icon>
@@ -142,8 +205,7 @@
           <button
             matButton="filled"
             class="botao-calcular"
-            (click)="abaAtiva() === 0 ? calcularDoFormulario() : calcularDaImportacao()"
-            [disabled]="abaAtiva() === 1 && (importacao()?.linhas ?? []).length === 0"
+            (click)="calcularDoFormulario()"
           >
             <mat-icon>calculate</mat-icon>
             Calcular cota

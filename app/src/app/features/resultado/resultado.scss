@@ -51,6 +51,84 @@ mat-card-header {
   &.situacao.deficit .valor {
     color: var(--status-critico);
   }
+  &.situacao.alerta .valor {
+    color: var(--status-alerta);
+  }
+}
+
+.aviso-excedente {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  border: 1px solid var(--status-alerta);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  font-size: 0.88rem;
+
+  mat-icon {
+    color: var(--status-alerta);
+    flex-shrink: 0;
+  }
+}
+
+.filiais {
+  margin: 16px 0 4px;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+  }
+
+  .tabela-filiais {
+    overflow-x: auto;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 12px;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--mat-sys-outline-variant);
+      }
+
+      tbody tr {
+        cursor: pointer;
+
+        &:hover {
+          background: var(--mat-sys-surface-container-high);
+        }
+
+        &.selecionada {
+          background: color-mix(in srgb, var(--mat-sys-primary) 12%, transparent);
+        }
+
+        &:last-child td {
+          border-bottom: 0;
+        }
+      }
+
+      .numero {
+        text-align: right;
+      }
+    }
+  }
+
+  .dica-filial {
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.78rem;
+    margin: 6px 2px;
+  }
+}
+
+.titulo-filial {
+  margin: 12px 2px 0;
+  font-size: 1.05rem;
 }
 
 .graficos {
@@ -141,6 +219,14 @@ mat-card-header {
 
   span {
     color: var(--mat-sys-on-surface-variant);
+  }
+
+  .botao-contratar {
+    margin-left: auto; // canto direito da linha
+
+    mat-icon {
+      margin-right: 6px;
+    }
   }
 }
 
