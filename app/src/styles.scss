@@ -1,0 +1,90 @@
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$orange-palette,
+        theme-type: color-scheme,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  // Paleta dos gráficos — validada (CVD, croma, contraste) para cada superfície.
+  --viz-incluidos: #0e93a3;
+  --viz-excluidos-cbo: #eb6834;
+  --viz-aprendizes: #4a3aa7;
+  --viz-estagiarios: #eda100;
+  --viz-excluidos-manual: #e87ba4;
+  --viz-cota-maxima: #5aa9b5; // passo mais claro do cyan (ordinal, mesma grandeza)
+  --viz-grade: #e1e0d9;
+
+  // Cores de status (sempre acompanhadas de ícone + texto, nunca só cor)
+  --status-bom: #0ca30c;
+  --status-critico: #d03b3b;
+  --status-alerta: #ec835a;
+}
+
+html.tema-escuro {
+  color-scheme: dark;
+
+  --viz-incluidos: #189aaa;
+  --viz-excluidos-cbo: #d95926;
+  --viz-aprendizes: #9085e9;
+  --viz-estagiarios: #c98500;
+  --viz-excluidos-manual: #d55181;
+  --viz-cota-maxima: #0e6570;
+  --viz-grade: #2c2c2a;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+}
+
+// Botões de download dos modelos com metade da altura padrão (40px → 20px).
+// Global e com seletor reforçado: o estilo do botão do Material carrega depois
+// do styles.css e empata em especificidade com uma classe só.
+a.botao-modelo.mat-mdc-button-base {
+  height: 20px;
+  min-height: 20px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+
+  .mat-mdc-button-touch-target {
+    height: 100%;
+  }
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+// Campo de CNPJ compacto (metade da altura padrão do Material).
+// Global porque mexe em classes internas do MDC, fora do escopo do componente.
+.campo-cnpj {
+  .mat-mdc-text-field-wrapper {
+    height: 28px;
+    display: flex;
+    align-items: center;
+  }
+
+  .mat-mdc-form-field-infix {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    min-height: 24px;
+  }
+
+  input {
+    font-size: 0.85rem;
+  }
+}

@@ -1,0 +1,33 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topo {
+  gap: 10px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+
+  .titulo {
+    font-size: 1.05rem;
+  }
+
+  .espaco {
+    flex: 1;
+  }
+}
+
+main {
+  flex: 1;
+  width: min(1080px, 100% - 32px);
+  margin: 24px auto;
+}
+
+footer {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}

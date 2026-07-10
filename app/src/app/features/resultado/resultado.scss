@@ -1,0 +1,252 @@
+.cartao-resultado {
+  margin-top: 24px;
+}
+
+mat-card-header {
+  align-items: center;
+
+  .espaco {
+    flex: 1;
+  }
+
+  .troca-visao {
+    mat-icon {
+      margin-right: 6px;
+    }
+  }
+}
+
+.cartoes-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+
+.tile {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--mat-sys-surface-container-low);
+
+  .valor {
+    font-size: 1.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rotulo {
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.82rem;
+  }
+
+  &.situacao.ok .valor {
+    color: var(--status-bom);
+  }
+  &.situacao.deficit .valor {
+    color: var(--status-critico);
+  }
+  &.situacao.alerta .valor {
+    color: var(--status-alerta);
+  }
+}
+
+.aviso-excedente {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  border: 1px solid var(--status-alerta);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  font-size: 0.88rem;
+
+  mat-icon {
+    color: var(--status-alerta);
+    flex-shrink: 0;
+  }
+}
+
+.filiais {
+  margin: 16px 0 4px;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+  }
+
+  .tabela-filiais {
+    overflow-x: auto;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 12px;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--mat-sys-outline-variant);
+      }
+
+      tbody tr {
+        cursor: pointer;
+
+        &:hover {
+          background: var(--mat-sys-surface-container-high);
+        }
+
+        &.selecionada {
+          background: color-mix(in srgb, var(--mat-sys-primary) 12%, transparent);
+        }
+
+        &:last-child td {
+          border-bottom: 0;
+        }
+      }
+
+      .numero {
+        text-align: right;
+      }
+    }
+  }
+
+  .dica-filial {
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.78rem;
+    margin: 6px 2px;
+  }
+}
+
+.titulo-filial {
+  margin: 12px 2px 0;
+  font-size: 1.05rem;
+}
+
+.graficos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+
+  figure {
+    margin: 0;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 12px;
+    padding: 16px;
+
+    figcaption {
+      font-size: 0.9rem;
+      color: var(--mat-sys-on-surface-variant);
+      margin-bottom: 8px;
+    }
+  }
+
+  .area-grafico {
+    position: relative;
+    height: 260px;
+  }
+}
+
+.tabela-detalhe {
+  overflow-x: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+
+  table {
+    width: 100%;
+    background: transparent;
+  }
+
+  .codigo {
+    font-family: monospace;
+  }
+
+  .numero {
+    text-align: right;
+  }
+
+  .etiqueta {
+    display: inline-block;
+    border-radius: 12px;
+    padding: 1px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-right: 8px;
+
+    &.sim {
+      background: color-mix(in srgb, var(--viz-incluidos) 18%, transparent);
+      color: var(--mat-sys-on-surface);
+    }
+    &.nao {
+      background: var(--mat-sys-surface-container-high);
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  .motivo {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .acoes {
+    white-space: nowrap;
+
+    mat-slide-toggle {
+      margin-right: 8px;
+    }
+  }
+
+  .linha-excluida td {
+    opacity: 0.75;
+  }
+}
+
+.exportar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+
+  span {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .botao-contratar {
+    margin-left: auto; // canto direito da linha
+
+    mat-icon {
+      margin-right: 6px;
+    }
+  }
+}
+
+.avisos {
+  margin-top: 20px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  padding-top: 12px;
+
+  p {
+    display: flex;
+    gap: 8px;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.82rem;
+    margin: 6px 0;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+  }
+}

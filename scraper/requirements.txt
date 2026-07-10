@@ -1,0 +1,2 @@
+# Sem dependências externas: o scraper usa apenas a stdlib (urllib, csv, json).
+# boto3 (para ler o token no SSM) já vem embutido no runtime Python da Lambda.
