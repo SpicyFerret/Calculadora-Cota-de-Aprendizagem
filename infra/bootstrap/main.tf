@@ -57,6 +57,11 @@ resource "aws_iam_openid_connect_provider" "github" {
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
+import {
+  to = aws_iam_openid_connect_provider.github
+  id = "arn:aws:iam::${data.aws_caller_identity.atual.account_id}:oidc-provider/token.actions.githubusercontent.com"
+}
+
 data "aws_iam_policy_document" "github_assume" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]

@@ -58,6 +58,9 @@ npm run build    # build de produção em dist/cota-aprendiz/browser
    tofu apply -var "github_repo=SEU_USUARIO/SEU_REPO"
    ```
 
+  Se o provider OIDC já existir na conta, o bootstrap o importa automaticamente para o state.
+  Se você já estiver dentro de `infra/bootstrap`, use `tofu init` e `tofu apply ...` sem `-chdir`.
+
    Anote a saída `aws_role_arn`. O bucket do estado **não precisa ser criado**: o workflow
    calcula o nome determinístico `org-repo-contaAWS-regiao-tf-state` e cria o bucket na
    primeira execução, se não existir.
