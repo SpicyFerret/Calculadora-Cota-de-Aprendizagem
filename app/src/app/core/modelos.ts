@@ -33,6 +33,13 @@ export interface LinhaQuadro {
   cbo: string;
   tipo: TipoVinculo;
   quantidade: number;
+  /**
+   * Quantas das `quantidade` pessoas desta linha são cargo de direção ou
+   * confiança (excluídas da base) — permite excluir só uma parte das pessoas
+   * de um CBO (ex.: 1 de 5) sem precisar de uma linha separada. Ausente ou 0
+   * equivale a nenhuma. O CalculoService separa essa parcela ao agregar.
+   */
+  quantidadeConfianca?: number;
 }
 
 /** Um estabelecimento (matriz ou filial): a cota é apurada por CNPJ. */
@@ -58,6 +65,8 @@ export interface ItemResultado {
   overrideExcluido: boolean;
   /** Linhas CLT/PCD com CBO incluso podem ser excluídas manualmente (cargo de confiança). */
   podeExcluirManualmente: boolean;
+  /** Se esta linha foi marcada como cargo de confiança já na entrada (form/planilha). */
+  cargoConfianca: boolean;
 }
 
 export interface ComposicaoQuadro {
@@ -65,7 +74,10 @@ export interface ComposicaoQuadro {
   excluidosPeloCbo: number;
   aprendizes: number;
   estagiarios: number;
+  /** Excluídos pelo toggle "Excluir" na tabela de resultado, depois de calculado. */
   excluidosManualmente: number;
+  /** Excluídos por já terem sido sinalizados como cargo de confiança/direção no formulário ou na planilha. */
+  excluidosCargoConfianca: number;
 }
 
 export interface ResultadoCalculo {

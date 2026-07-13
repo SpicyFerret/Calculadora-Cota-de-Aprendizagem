@@ -134,6 +134,43 @@ describe('CalculoService', () => {
     expect(r.composicao.excluidosManualmente).toBe(10);
   });
 
+  it('quantidadeConfianca separa e exclui só a parcela marcada de um CBO', async () => {
+    const r = await calcular([{ cbo: '411010', tipo: 'CLT', quantidade: 5, quantidadeConfianca: 1 }]);
+    expect(r.itens.length).toBe(2);
+    expect(r.base).toBe(4);
+    expect(r.composicao.excluidosCargoConfianca).toBe(1);
+    expect(r.composicao.excluidosManualmente).toBe(0);
+    const excluido = r.itens.find((i) => i.cargoConfianca);
+    expect(excluido?.quantidade).toBe(1);
+    expect(excluido?.entraNaBase).toBe(false);
+    expect(excluido?.motivo).toContain('sinalizado na entrada');
+    const normal = r.itens.find((i) => !i.cargoConfianca);
+    expect(normal?.quantidade).toBe(4);
+    expect(normal?.entraNaBase).toBe(true);
+  });
+
+  it('quantidadeConfianca soma entre linhas repetidas do mesmo CBO antes de separar', async () => {
+    const r = await calcular([
+      { cbo: '411010', tipo: 'CLT', quantidade: 3 },
+      { cbo: '411010', tipo: 'CLT', quantidade: 2, quantidadeConfianca: 1 },
+    ]);
+    expect(r.itens.length).toBe(2);
+    expect(r.base).toBe(4); // 3 + (2 - 1)
+    expect(r.composicao.excluidosCargoConfianca).toBe(1);
+  });
+
+  it('exclusão manual (toggle) e cargo de confiança (entrada) ficam em buckets separados', async () => {
+    const r = await calcular(
+      [
+        { cbo: '411010', tipo: 'CLT', quantidade: 5, quantidadeConfianca: 1 },
+        { cbo: '514320', tipo: 'CLT', quantidade: 10 },
+      ],
+      new Set(['514320']),
+    );
+    expect(r.composicao.excluidosCargoConfianca).toBe(1);
+    expect(r.composicao.excluidosManualmente).toBe(10);
+  });
+
   it('recalcular reflete mudança nas exclusões manuais', async () => {
     const original = await calcular([{ cbo: '411010', tipo: 'CLT', quantidade: 20 }]);
     const alterado = servico.recalcular(original, new Set(['411010']));

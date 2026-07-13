@@ -36,6 +36,7 @@ html {
   --viz-aprendizes: #4a3aa7;
   --viz-estagiarios: #eda100;
   --viz-excluidos-manual: #e87ba4;
+  --viz-excluidos-confianca: #3d6fd1;
   --viz-cota-maxima: #5cb8b0; // passo mais claro do verde-água (ordinal, mesma grandeza)
   --viz-grade: #e1e0d9;
 
@@ -53,8 +54,20 @@ html.tema-escuro {
   --viz-aprendizes: #9085e9;
   --viz-estagiarios: #c98500;
   --viz-excluidos-manual: #d55181;
+  --viz-excluidos-confianca: #5f85e0;
   --viz-cota-maxima: #0c6b64;
   --viz-grade: #2c2c2a;
+}
+
+html {
+  // Elementos fixed fora da tela (ex.: painel de ajuda fechado, deslocado por
+  // transform) contam para o scrollWidth do documento em alguns navegadores;
+  // isso evita rolagem horizontal indesejada em telas estreitas. Só no html
+  // (não também no body): aplicar overflow-x nos dois promove overflow-y a
+  // "auto" em ambos (regra do CSS), criando dois scrollers aninhados — isso
+  // quebra o position: sticky do cabeçalho, que passa a colar no scroller
+  // errado.
+  overflow-x: hidden;
 }
 
 body {

@@ -72,6 +72,14 @@ export class AjudaService {
       preRequisitos: [ABA_FORMULARIO],
     },
     {
+      id: 'cargo-confianca',
+      titulo: 'Cargo de confiança',
+      descricao:
+        'Quantas das pessoas desta linha são cargo de direção ou confiança — essa parcela fica fora da base de cálculo. Ex.: 5 no CBO e 1 de confiança conta 4 na base e exclui só 1, sem precisar de outra linha.',
+      alvo: '[data-ajuda="campo-confianca"]',
+      preRequisitos: [ABA_FORMULARIO],
+    },
+    {
       id: 'filiais',
       titulo: 'Matriz e filiais (CNPJ)',
       descricao:

@@ -121,6 +121,11 @@ export class Resultado {
       { rotulo: 'Aprendizes atuais', valor: c.aprendizes, cor: this.corVar('--viz-aprendizes') },
       { rotulo: 'Estagiários', valor: c.estagiarios, cor: this.corVar('--viz-estagiarios') },
       { rotulo: 'Excluídos manualmente', valor: c.excluidosManualmente, cor: this.corVar('--viz-excluidos-manual') },
+      {
+        rotulo: 'Cargo de confiança (entrada)',
+        valor: c.excluidosCargoConfianca,
+        cor: this.corVar('--viz-excluidos-confianca'),
+      },
     ].filter((f) => f.valor > 0);
 
     const superficie = this.resolverCor('var(--mat-sys-surface)', '#ffffff');
