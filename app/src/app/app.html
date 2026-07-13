@@ -1,9 +1,12 @@
 <mat-toolbar class="topo">
-  <mat-icon aria-hidden="true">school</mat-icon>
+  <a href="https://gerar.org.br/projeto/aprendiz-gerar/" target="_blank" rel="noopener" class="link-logo">
+    <img class="logo" src="marca/logo-fonte-branca.png" alt="Aprendiz Gerar" />
+  </a>
   <span class="titulo">Calculadora de Cota de Aprendizagem</span>
   <span class="espaco"></span>
   <button
     matIconButton
+    data-ajuda="tema"
     (click)="tema.alternar()"
     [attr.aria-label]="tema.escuro() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
   >
@@ -16,7 +19,7 @@
   <app-resultado />
 </main>
 
-<footer>
+<footer data-ajuda="rodape">
   @if (cbo.carregada()) {
     <span>
       Base CBO: {{ cbo.totalOcupacoes() }} ocupações · atualizada em {{ cbo.geradoEm() }} ·
@@ -24,3 +27,5 @@
     </span>
   }
 </footer>
+
+<app-ajuda />

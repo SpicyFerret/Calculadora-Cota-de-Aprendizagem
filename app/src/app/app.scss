@@ -2,12 +2,37 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  transition: margin-right 0.25s ease;
+}
+
+// Painel de ajuda aberto: o app é empurrado para o lado.
+:host(.ajuda-aberta) {
+  margin-right: var(--ajuda-largura);
+}
+
+@media (max-width: 900px) {
+  // Em telas estreitas o painel cobre o app em vez de espremer o conteúdo.
+  :host(.ajuda-aberta) {
+    margin-right: 0;
+  }
 }
 
 .topo {
-  gap: 10px;
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
+  gap: 14px;
+  // Azul-marinho da marca em ambos os temas; a logo usada é a variante
+  // "fonte branca", feita para fundo escuro.
+  background: var(--marca-azul);
+  color: #ffffff;
+
+  .link-logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo {
+    height: 36px;
+    display: block;
+  }
 
   .titulo {
     font-size: 1.05rem;

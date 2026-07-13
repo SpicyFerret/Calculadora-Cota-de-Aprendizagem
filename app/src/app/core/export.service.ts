@@ -4,6 +4,10 @@ import { ItemResultado, ResultadoCalculo, TIPOS } from './modelos';
 
 const URL_CONTRATAR = 'https://gerar.org.br/projeto/aprendiz-gerar/';
 
+// Identidade Aprendiz Gerar
+const AZUL_MARCA: [number, number, number] = [39, 46, 97]; // #272E61
+const VERDE_MARCA_TEXTO: [number, number, number] = [0, 133, 124]; // verde-água escurecido p/ texto
+
 @Injectable({ providedIn: 'root' })
 export class ExportService {
   private cbo = inject(CboService);
@@ -92,17 +96,26 @@ export class ExportService {
       import('jspdf-autotable'),
     ]);
     const pdf = new jsPDF();
+    const logo = await this.logoDataUrl();
+    if (logo) {
+      // Logo horizontal 1849×824 px → 36×16 mm, alinhada à margem direita
+      pdf.addImage(logo, 'PNG', 160, 8, 36, 16);
+    }
     pdf.setFontSize(16);
+    pdf.setTextColor(...AZUL_MARCA);
     pdf.text('Relatório — Cota de Aprendizagem', 14, 18);
     pdf.setFontSize(9);
     pdf.setTextColor(110);
     pdf.text(
-      `Gerado em ${new Date().toLocaleString('pt-BR')} · Base CBO de ${this.cbo.geradoEm()} (${this.cbo.fonte()})`,
+      [
+        `Gerado em ${new Date().toLocaleString('pt-BR')}`,
+        `Base CBO de ${this.cbo.geradoEm()} (${this.cbo.fonte()})`,
+      ],
       14,
       25,
     );
 
-    let posicao = 32;
+    let posicao = 36;
     for (const r of resultados) {
       autoTable(pdf, {
         startY: posicao,
@@ -110,7 +123,7 @@ export class ExportService {
         body: this.linhasResumo(r),
         theme: 'plain',
         styles: { fontSize: 10 },
-        headStyles: { fontStyle: 'bold' },
+        headStyles: { fontStyle: 'bold', textColor: AZUL_MARCA },
         columnStyles: { 0: { cellWidth: 120 }, 1: { halign: 'right', fontStyle: 'bold' } },
       });
       posicao = this.posicaoFinal(pdf) + 6;
@@ -131,7 +144,7 @@ export class ExportService {
         ]),
       ),
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [14, 147, 163] },
+      headStyles: { fillColor: AZUL_MARCA, textColor: 255 },
       columnStyles: { 4: { halign: 'right' } },
     });
 
@@ -146,11 +159,30 @@ export class ExportService {
       posicaoAvisos,
     );
     pdf.setFontSize(10);
-    pdf.setTextColor(14, 147, 163);
+    pdf.setTextColor(...VERDE_MARCA_TEXTO);
     pdf.textWithLink('Contrate aprendizes com a GERAR: gerar.org.br/projeto/aprendiz-gerar', 14, posicaoAvisos + 14, {
       url: URL_CONTRATAR,
     });
     pdf.save(this.nomeArquivo('pdf'));
+  }
+
+  /** Logo colorida (fundo claro) embutida no PDF; sem ela o relatório sai só com texto. */
+  private async logoDataUrl(): Promise<string | null> {
+    try {
+      const resposta = await fetch('marca/logo-horizontal.png');
+      if (!resposta.ok) {
+        return null;
+      }
+      const blob = await resposta.blob();
+      return await new Promise((resolve, reject) => {
+        const leitor = new FileReader();
+        leitor.onload = () => resolve(leitor.result as string);
+        leitor.onerror = reject;
+        leitor.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
   }
 
   private posicaoFinal(pdf: unknown): number {
