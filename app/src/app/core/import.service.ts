@@ -20,6 +20,8 @@ const TIPOS_RECONHECIDOS: Record<string, TipoVinculo> = {
   'jovem aprendiz': 'APRENDIZ',
 };
 
+const VALORES_AFIRMATIVOS = new Set(['sim', 's', 'true', '1', 'x', 'yes']);
+
 @Injectable({ providedIn: 'root' })
 export class ImportService {
   private cbo = inject(CboService);
@@ -28,7 +30,10 @@ export class ImportService {
    * Lê CSV ou XLSX. Dois formatos, detectados pelo cabeçalho:
    *  - agregado: CBO; TIPO; QUANTIDADE
    *  - lista:    [NOME;] CBO; TIPO   (cada linha = 1 pessoa)
-   * Uma coluna CNPJ opcional separa os estabelecimentos (matriz/filiais).
+   * Colunas opcionais: CNPJ (separa os estabelecimentos) e CARGO_CONFIANCA —
+   * no formato agregado é um número (quantas da QUANTIDADE são cargo de
+   * direção ou confiança, 0 por padrão); no formato lista é SIM/NAO (a pessoa
+   * da linha é cargo de confiança). Em ambos, essa parcela fica fora da base.
    */
   async lerArquivo(arquivo: File): Promise<ResultadoImportacao> {
     const buffer = await arquivo.arrayBuffer();
@@ -59,6 +64,9 @@ export class ImportService {
     const colTipo = cabecalho.findIndex((c) => c === 'tipo' || c === 'vinculo');
     const colQuantidade = cabecalho.findIndex((c) => c === 'quantidade' || c === 'qtd' || c === 'qtde');
     const colCnpj = cabecalho.findIndex((c) => c === 'cnpj' || c === 'estabelecimento' || c === 'filial');
+    const colCargoConfianca = cabecalho.findIndex(
+      (c) => c === 'cargo_confianca' || c === 'cargo confianca' || c === 'confianca' || c === 'direcao',
+    );
     if (colCbo < 0 || colTipo < 0) {
       return {
         grupos: [],
@@ -99,8 +107,30 @@ export class ImportService {
         return;
       }
 
+      let quantidadeConfianca = 0;
+      if (colCargoConfianca >= 0) {
+        const valorCru = valores[colCargoConfianca] ?? '';
+        if (formato === 'agregado') {
+          const texto = valorCru.trim();
+          const numero = texto === '' ? 0 : Number(texto.replace(',', '.'));
+          if (!Number.isFinite(numero) || numero < 0 || !Number.isInteger(numero)) {
+            erros.push(`Linha ${numeroLinha}: cargo de confiança "${valorCru}" inválido (use um número).`);
+            return;
+          }
+          if (numero > quantidade) {
+            erros.push(
+              `Linha ${numeroLinha}: cargo de confiança (${numero}) maior que a quantidade (${quantidade}).`,
+            );
+            return;
+          }
+          quantidadeConfianca = numero;
+        } else {
+          quantidadeConfianca = VALORES_AFIRMATIVOS.has(this.normalizarTexto(valorCru)) ? 1 : 0;
+        }
+      }
+
       const grupo = grupos.get(cnpj) ?? { cnpj, linhas: [] };
-      grupo.linhas.push({ cbo: codigo, tipo, quantidade });
+      grupo.linhas.push({ cbo: codigo, tipo, quantidade, quantidadeConfianca });
       grupos.set(cnpj, grupo);
     });
 

@@ -19,6 +19,12 @@
 
 .topo {
   gap: 14px;
+  // Fixo no topo: fica visível ao rolar a página, acima do conteúdo mas
+  // atrás do painel de ajuda (z-index 95) e seu botão lateral (90).
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
   // Azul-marinho da marca em ambos os temas; a logo usada é a variante
   // "fonte branca", feita para fundo escuro.
   background: var(--marca-azul);
