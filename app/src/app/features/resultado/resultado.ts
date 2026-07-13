@@ -37,8 +37,6 @@ Chart.register(
   Tooltip,
 );
 
-const URL_MTE = 'http://www.mtecbo.gov.br/cbosite/pages/pesquisas/BuscaPorCodigo.jsf';
-
 @Component({
   selector: 'app-resultado',
   imports: [
@@ -62,7 +60,6 @@ export class Resultado {
   private tema = inject(ThemeService);
 
   readonly visao = signal<'geral' | 'detalhe'>('geral');
-  readonly urlMte = URL_MTE;
   readonly colunas = ['codigo', 'titulo', 'tipo', 'quantidade', 'situacao', 'acoes'];
 
   private telaComposicao = viewChild<ElementRef<HTMLCanvasElement>>('graficoComposicao');

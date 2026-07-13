@@ -1,2 +1,5 @@
-# Sem dependências externas: o scraper usa apenas a stdlib (urllib, csv, json).
+# pypdf: extrai o texto dos Livros 1 e 2 da CBO (ficha de família ocupacional,
+# usada para saber se a família exige formação profissional — art. 429 CLT).
+# O resto do scraper usa só a stdlib (urllib, csv, json).
 # boto3 (para ler o token no SSM) já vem embutido no runtime Python da Lambda.
+pypdf==6.14.2

@@ -1,31 +1,21 @@
 import { Injectable, signal } from '@angular/core';
 import { BaseCbo, Classificacao, Ocupacao } from './modelos';
 
-/**
- * Grandes Grupos da CBO (1º dígito do código) excluídos da base de cálculo
- * da cota de aprendizagem (CLT art. 429 + Decreto 9.579/2018 art. 52):
- * funções que exigem habilitação de nível técnico ou superior e cargos
- * de direção/gerência. GG 0 (militares) está fora do regime da CLT.
- */
-const GG_EXCLUIDOS: Record<number, string> = {
-  0: 'GG 0 — Forças Armadas, policiais e bombeiros militares (fora do regime CLT)',
-  1: 'GG 1 — cargos de direção e gerência',
-  2: 'GG 2 — profissões que exigem nível superior',
-  3: 'GG 3 — técnicos de nível médio',
-};
+const MOTIVO_ENTRA =
+  'Segundo a ficha oficial do MTE, esta família ocupacional demanda formação profissional para efeitos do cálculo da cota (art. 429 da CLT)';
+const MOTIVO_NAO_ENTRA =
+  'Segundo a ficha oficial do MTE, esta família ocupacional não demanda formação profissional para efeitos do cálculo da cota (art. 429 da CLT)';
 
-const GG_INCLUIDOS: Record<number, string> = {
-  4: 'GG 4 — trabalhadores de serviços administrativos',
-  5: 'GG 5 — trabalhadores dos serviços, vendedores do comércio',
-  6: 'GG 6 — trabalhadores agropecuários, florestais e da pesca',
-  7: 'GG 7 — trabalhadores da produção de bens e serviços industriais',
-  8: 'GG 8 — trabalhadores da produção de bens e serviços industriais',
-  9: 'GG 9 — trabalhadores em serviços de reparação e manutenção',
+/** Mesmas URLs que o scraper usa como fonte (ver scraper/scraper.py). */
+const DOWNLOADS = 'https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/cbo/servicos/downloads';
+const LIVROS_URL: Record<1 | 2, string> = {
+  1: `${DOWNLOADS}/livro-1-portal-cbo.pdf`,
+  2: `${DOWNLOADS}/cbo2002_liv2.pdf`,
 };
 
 @Injectable({ providedIn: 'root' })
 export class CboService {
-  private titulos = new Map<string, string>();
+  private ocupacoesPorCodigo = new Map<string, Ocupacao>();
   private ocupacoes: Ocupacao[] = [];
 
   readonly carregada = signal(false);
@@ -50,7 +40,7 @@ export class CboService {
   /** Também usado pelos testes para injetar uma base pequena. */
   usarBase(base: BaseCbo): void {
     this.ocupacoes = base.ocupacoes;
-    this.titulos = new Map(base.ocupacoes.map((o) => [o.codigo, o.titulo]));
+    this.ocupacoesPorCodigo = new Map(base.ocupacoes.map((o) => [o.codigo, o]));
     this.geradoEm.set(base.geradoEm);
     this.fonte.set(base.fonte);
     this.totalOcupacoes.set(base.ocupacoes.length);
@@ -64,11 +54,11 @@ export class CboService {
   }
 
   titulo(codigo: string): string | null {
-    return this.titulos.get(this.normalizar(codigo)) ?? null;
+    return this.ocupacoesPorCodigo.get(this.normalizar(codigo))?.titulo ?? null;
   }
 
   existe(codigo: string): boolean {
-    return this.titulos.has(this.normalizar(codigo));
+    return this.ocupacoesPorCodigo.has(this.normalizar(codigo));
   }
 
   /** Autocomplete: busca por prefixo do código ou trecho do título. */
@@ -92,12 +82,29 @@ export class CboService {
     return resultado;
   }
 
-  /** Diz se o CBO entra na base de cálculo da cota e por quê. */
+  /** Diz se o CBO entra na base de cálculo da cota e por quê. Só chamar para código existente. */
   classificar(codigo: string): Classificacao {
-    const gg = Number(this.normalizar(codigo)[0]);
-    if (gg in GG_EXCLUIDOS) {
-      return { entra: false, grandeGrupo: gg, motivo: GG_EXCLUIDOS[gg] };
-    }
-    return { entra: true, grandeGrupo: gg, motivo: GG_INCLUIDOS[gg] };
+    const ocupacao = this.ocupacoesPorCodigo.get(this.normalizar(codigo));
+    const entra = ocupacao?.exigeFormacaoProfissional ?? false;
+    return { entra, motivo: entra ? MOTIVO_ENTRA : MOTIVO_NAO_ENTRA };
+  }
+
+  /**
+   * Link para a ficha desta família no Livro oficial da CBO (PDF), na página exata
+   * quando conhecida — troca a antiga consulta no mtecbo.gov.br, que exige sessão
+   * JSF instável demais para ser um link direto e confiável.
+   */
+  linkFicha(codigo: string): string {
+    const ocupacao = this.ocupacoesPorCodigo.get(this.normalizar(codigo));
+    const livro = ocupacao?.livro ?? 1;
+    const url = LIVROS_URL[livro];
+    return ocupacao?.paginaLivro ? `${url}#page=${ocupacao.paginaLivro}` : url;
+  }
+
+  /** Ex.: "Livro 1, página 694" — para exibir onde a ficha está antes de abrir o PDF. */
+  descricaoFicha(codigo: string): string {
+    const ocupacao = this.ocupacoesPorCodigo.get(this.normalizar(codigo));
+    const livro = ocupacao?.livro ?? 1;
+    return ocupacao?.paginaLivro ? `Livro ${livro}, página ${ocupacao.paginaLivro}` : `Livro ${livro}`;
   }
 }
