@@ -8,6 +8,7 @@
       <span class="espaco"></span>
       <mat-button-toggle-group
         class="troca-visao"
+        data-ajuda="troca-visao"
         [value]="visao()"
         (change)="visao.set($event.value)"
         aria-label="Alternar entre visão geral e detalhada"
@@ -62,7 +63,7 @@
           <h3 class="titulo-filial">{{ r.cnpj || 'Estabelecimento' }}</h3>
         }
       }
-      <div class="cartoes-resumo">
+      <div class="cartoes-resumo" data-ajuda="cartoes">
         <div class="tile">
           <span class="valor">{{ r.base | number: '1.0-0':'pt-BR' }}</span>
           <span class="rotulo">na base de cálculo</span>
@@ -111,7 +112,7 @@
       }
 
       <div [hidden]="visao() !== 'geral'">
-        <div class="graficos">
+        <div class="graficos" data-ajuda="graficos">
           <figure>
             <figcaption>Composição do quadro informado ({{ r.totalPessoas }} funcionários)</figcaption>
             <div class="area-grafico">
@@ -128,7 +129,7 @@
       </div>
 
       @if (visao() === 'detalhe') {
-        <div class="tabela-detalhe">
+        <div class="tabela-detalhe" data-ajuda="detalhe">
           <table mat-table [dataSource]="r.itens">
             <ng-container matColumnDef="codigo">
               <th mat-header-cell *matHeaderCellDef>CBO</th>
@@ -193,7 +194,7 @@
         </div>
       }
 
-      <div class="exportar">
+      <div class="exportar" data-ajuda="exportar">
         <span>Baixar relatório{{ (estado.resultados()?.length ?? 0) > 1 ? ' (todos os estabelecimentos)' : '' }}:</span>
         <button matButton="outlined" (click)="exportador.baixarCsv(estado.resultados()!)">
           <mat-icon>description</mat-icon>
@@ -210,6 +211,7 @@
         <a
           matButton="filled"
           class="botao-contratar"
+          data-ajuda="contratar"
           href="https://gerar.org.br/projeto/aprendiz-gerar/"
           target="_blank"
           rel="noopener"

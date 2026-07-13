@@ -2,6 +2,19 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  transition: margin-right 0.25s ease;
+}
+
+// Painel de ajuda aberto: o app é empurrado para o lado.
+:host(.ajuda-aberta) {
+  margin-right: var(--ajuda-largura);
+}
+
+@media (max-width: 900px) {
+  // Em telas estreitas o painel cobre o app em vez de espremer o conteúdo.
+  :host(.ajuda-aberta) {
+    margin-right: 0;
+  }
 }
 
 .topo {

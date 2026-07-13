@@ -1,0 +1,73 @@
+@if (!ajuda.aberta()) {
+  <button class="botao-ajuda" type="button" (click)="abrir()" aria-label="Abrir ajuda">
+    <mat-icon>help</mat-icon>
+    <span>Ajuda</span>
+  </button>
+}
+
+<aside class="painel" [class.visivel]="ajuda.aberta()" aria-label="Ajuda da calculadora">
+  <header>
+    <h2>Como usar a calculadora</h2>
+    <button matIconButton type="button" (click)="fechar()" aria-label="Fechar ajuda">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="corpo">
+    <p class="introducao">
+      Esta ferramenta estima a cota de aprendizagem (CLT art. 429): informe o quadro de
+      funcionários e ela identifica quais CBOs entram na base de cálculo e quantos aprendizes a
+      empresa deve contratar — no mínimo 5% e no máximo 15% da base, por estabelecimento (CNPJ).
+    </p>
+    <p class="introducao dica">
+      Clique em uma função abaixo para destacá-la na tela. Se a área ainda não estiver visível, o
+      destaque mostra o que fazer para exibi-la.
+    </p>
+
+    <ul class="topicos">
+      @for (topico of ajuda.topicos; track topico.id) {
+        <li [id]="'ajuda-item-' + topico.id">
+          <button
+            class="topico"
+            type="button"
+            [class.ativo]="ajuda.topicoAtivo() === topico.id"
+            (click)="selecionar(topico)"
+          >
+            <strong>{{ topico.titulo }}</strong>
+            <span>{{ topico.descricao }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <footer class="acoes-tour">
+    @if (passo() === null) {
+      <button matButton="filled" type="button" (click)="iniciarTour()">
+        <mat-icon>tour</mat-icon>
+        Percorrer o sistema
+      </button>
+    } @else {
+      <button
+        matIconButton
+        type="button"
+        (click)="anterior()"
+        [disabled]="passo() === 0"
+        aria-label="Passo anterior"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <span class="progresso-tour">{{ passo()! + 1 }} / {{ ajuda.topicos.length }}</span>
+      <button
+        matIconButton
+        type="button"
+        (click)="proximo()"
+        [disabled]="passo() === ajuda.topicos.length - 1"
+        aria-label="Próximo passo"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button matButton type="button" (click)="encerrarTour()">Encerrar</button>
+    }
+  </footer>
+</aside>

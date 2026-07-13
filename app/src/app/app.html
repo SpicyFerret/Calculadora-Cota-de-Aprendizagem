@@ -6,6 +6,7 @@
   <span class="espaco"></span>
   <button
     matIconButton
+    data-ajuda="tema"
     (click)="tema.alternar()"
     [attr.aria-label]="tema.escuro() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
   >
@@ -18,7 +19,7 @@
   <app-resultado />
 </main>
 
-<footer>
+<footer data-ajuda="rodape">
   @if (cbo.carregada()) {
     <span>
       Base CBO: {{ cbo.totalOcupacoes() }} ocupações · atualizada em {{ cbo.geradoEm() }} ·
@@ -26,3 +27,5 @@
     </span>
   }
 </footer>
+
+<app-ajuda />
