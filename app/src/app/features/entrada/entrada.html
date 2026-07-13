@@ -1,4 +1,4 @@
-<mat-card appearance="outlined">
+<mat-card appearance="outlined" data-ajuda="quadro">
   <mat-card-header>
     <mat-card-title>Quadro de funcionários</mat-card-title>
     <mat-card-subtitle>
@@ -15,7 +15,7 @@
       <p class="dica">Carregando a base oficial de CBOs…</p>
     } @else {
       <mat-tab-group [selectedIndex]="abaAtiva()" (selectedIndexChange)="abaAtiva.set($event)">
-        <mat-tab label="Formulário">
+        <mat-tab label="Formulário" labelClass="ajuda-aba-formulario">
           @for (grupo of grupos(); track grupo) {
             <fieldset class="grupo-filial">
               <legend>
@@ -44,7 +44,12 @@
               <div class="linhas">
                 @for (linha of grupo.linhas; track linha) {
                   <div class="linha">
-                    <mat-form-field class="campo-cbo" appearance="outline" subscriptSizing="dynamic">
+                    <mat-form-field
+                      class="campo-cbo"
+                      data-ajuda="campo-cbo"
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                    >
                       <mat-label>CBO (código ou título)</mat-label>
                       <input
                         matInput
@@ -67,7 +72,12 @@
                       }
                     </mat-form-field>
 
-                    <mat-form-field class="campo-tipo" appearance="outline" subscriptSizing="dynamic">
+                    <mat-form-field
+                      class="campo-tipo"
+                      data-ajuda="campo-tipo"
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                    >
                       <mat-label>Vínculo</mat-label>
                       <mat-select [(ngModel)]="linha.tipo">
                         @for (tipo of tipos; track tipo.valor) {
@@ -76,7 +86,12 @@
                       </mat-select>
                     </mat-form-field>
 
-                    <mat-form-field class="campo-qtd" appearance="outline" subscriptSizing="dynamic">
+                    <mat-form-field
+                      class="campo-qtd"
+                      data-ajuda="campo-qtd"
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                    >
                       <mat-label>Qtd.</mat-label>
                       <input matInput type="number" min="1" step="1" [(ngModel)]="linha.quantidade" />
                     </mat-form-field>
@@ -102,7 +117,7 @@
           }
 
           <div class="acoes-linhas">
-            <button matButton="outlined" (click)="adicionarGrupo()">
+            <button matButton="outlined" data-ajuda="adicionar-filial" (click)="adicionarGrupo()">
               <mat-icon>add_business</mat-icon>
               Adicionar filial
             </button>
@@ -110,9 +125,10 @@
           </div>
         </mat-tab>
 
-        <mat-tab label="Importar planilha">
+        <mat-tab label="Importar planilha" labelClass="ajuda-aba-importar">
           <div
             class="zona-arquivo"
+            data-ajuda="importar"
             [class.arrastando]="arrastando()"
             (dragover)="aoArrastar($event, true)"
             (dragleave)="aoArrastar($event, false)"
@@ -127,7 +143,7 @@
               Uma coluna <code>CNPJ</code> opcional separa matriz e filiais.
             </p>
 
-            <div class="modelos">
+            <div class="modelos" data-ajuda="modelos">
               <div class="modelo">
                 <span class="descricao">
                   Modelo por quantidade — <code>CNPJ;CBO;TIPO;QUANTIDADE</code>
@@ -205,6 +221,7 @@
           <button
             matButton="filled"
             class="botao-calcular"
+            data-ajuda="calcular"
             (click)="calcularDoFormulario()"
           >
             <mat-icon>calculate</mat-icon>

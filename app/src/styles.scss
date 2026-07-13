@@ -27,6 +27,7 @@ html {
   --mat-sys-on-tertiary-container: light-dark(#272e61, #e0e0ff);
   --marca-azul: #272e61;
   --marca-verde: #00a99d;
+  --ajuda-largura: 340px;
 
   // Paleta dos gráficos — validada (CVD, croma, contraste) para cada superfície;
   // o 1º passo ancora no verde-água da marca.
@@ -101,4 +102,41 @@ a.botao-modelo.mat-mdc-button-base {
   input {
     font-size: 0.85rem;
   }
+}
+
+// Destaque do painel de ajuda — global porque a classe é aplicada em elementos
+// de qualquer componente (encapsulamento não alcançaria). Estilo e largura com
+// !important porque os botões do Material zeram o outline (outline: none) com
+// a mesma especificidade; a cor fica fora do !important para o pulso animar.
+.ajuda-destaque {
+  outline-color: var(--marca-verde);
+  outline-style: solid !important;
+  outline-width: 3px !important;
+  outline-offset: 3px;
+  animation: ajuda-pulso 1.2s ease-in-out infinite;
+}
+
+@keyframes ajuda-pulso {
+  0%,
+  100% {
+    outline-color: var(--marca-verde);
+  }
+
+  50% {
+    outline-color: color-mix(in srgb, var(--marca-verde) 30%, transparent);
+  }
+}
+
+// Tooltip da ajuda avisando o passo que falta para exibir uma área.
+.ajuda-dica {
+  position: fixed;
+  z-index: 1100;
+  max-width: 280px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--marca-azul);
+  color: #ffffff;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 30%);
 }
