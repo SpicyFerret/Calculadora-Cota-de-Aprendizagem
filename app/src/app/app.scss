@@ -5,9 +5,21 @@
 }
 
 .topo {
-  gap: 10px;
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
+  gap: 14px;
+  // Azul-marinho da marca em ambos os temas; a logo usada é a variante
+  // "fonte branca", feita para fundo escuro.
+  background: var(--marca-azul);
+  color: #ffffff;
+
+  .link-logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo {
+    height: 36px;
+    display: block;
+  }
 
   .titulo {
     font-size: 1.05rem;
