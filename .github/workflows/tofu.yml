@@ -10,6 +10,7 @@ on:
       - "scraper/**"
       - ".github/workflows/tofu.yml"
   pull_request:
+    branches: [infra]
     paths:
       - "infra/**"
       - "scraper/**"
