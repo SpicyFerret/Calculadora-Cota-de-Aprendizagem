@@ -36,6 +36,7 @@
   right: 0;
   bottom: 0;
   width: var(--ajuda-largura);
+  max-width: 100vw;
   box-sizing: border-box;
   z-index: 95;
   display: flex;

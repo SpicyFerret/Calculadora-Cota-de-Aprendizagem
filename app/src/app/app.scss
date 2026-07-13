@@ -36,10 +36,26 @@
 
   .titulo {
     font-size: 1.05rem;
+    // Toolbar do Material não deixa itens flex encolherem abaixo do texto
+    // inteiro por padrão (white-space: nowrap + min-width: auto) — em telas
+    // estreitas isso empurrava os botões para fora e criava rolagem horizontal.
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .espaco {
     flex: 1;
+  }
+
+  .logo {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .topo .titulo {
+    display: none;
   }
 }
 

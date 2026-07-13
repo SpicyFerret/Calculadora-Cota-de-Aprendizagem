@@ -57,6 +57,14 @@ html.tema-escuro {
   --viz-grade: #2c2c2a;
 }
 
+html,
+body {
+  // Elementos fixed fora da tela (ex.: painel de ajuda fechado, deslocado por
+  // transform) contam para o scrollWidth do documento em alguns navegadores;
+  // isso evita rolagem horizontal indesejada em telas estreitas.
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
