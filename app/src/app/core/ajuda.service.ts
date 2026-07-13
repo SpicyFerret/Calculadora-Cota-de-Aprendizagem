@@ -136,12 +136,26 @@ export class AjudaService {
       id: 'detalhe',
       titulo: 'Tabela detalhada por CBO',
       descricao:
-        'Mostra se cada CBO entra na base e o motivo; permite excluir cargos de direção ou confiança e conferir o CBO no site do MTE.',
+        'Mostra se cada CBO entra na base e o motivo; permite excluir cargos de direção ou confiança.',
       alvo: '[data-ajuda="detalhe"]',
       preRequisitos: [
         {
           alvo: '[data-ajuda="troca-visao"]',
           mensagem: 'Clique em "Detalhado por CBO" para ver esta tabela.',
+        },
+        CALCULAR_ANTES,
+      ],
+    },
+    {
+      id: 'conferir-cbo',
+      titulo: 'Conferência do CBO',
+      descricao:
+        'A classificação de cada CBO — se ele entra na cota ou não — vem direto da ficha oficial do MTE (Livros 1 e 2 da Classificação Brasileira de Ocupações), não de uma estimativa. O ícone ao lado de cada linha abre o PDF oficial já na página da família daquele código, para você conferir a fonte.',
+      alvo: '[data-ajuda="conferir-cbo"]',
+      preRequisitos: [
+        {
+          alvo: '[data-ajuda="troca-visao"]',
+          mensagem: 'Clique em "Detalhado por CBO" para ver o botão de conferência.',
         },
         CALCULAR_ANTES,
       ],

@@ -177,11 +177,12 @@
                 }
                 <a
                   matIconButton
-                  [href]="urlMte"
+                  data-ajuda="conferir-cbo"
+                  [href]="cbo.linkFicha(item.codigo)"
                   target="_blank"
                   rel="noopener"
-                  matTooltip="Conferir este CBO no site do MTE (busca pelo código)"
-                  aria-label="Abrir busca de CBO no site do MTE"
+                  [matTooltip]="'Conferir a ficha desta família no ' + cbo.descricaoFicha(item.codigo) + ' da CBO (MTE)'"
+                  [attr.aria-label]="'Abrir a ficha desta família — ' + cbo.descricaoFicha(item.codigo) + ' da CBO'"
                 >
                   <mat-icon>open_in_new</mat-icon>
                 </a>

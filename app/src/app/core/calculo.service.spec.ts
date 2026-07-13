@@ -7,12 +7,12 @@ const BASE_TESTE = {
   geradoEm: '2026-07-10',
   fonte: 'teste',
   ocupacoes: [
-    { codigo: '411010', titulo: 'Assistente administrativo' },
-    { codigo: '514320', titulo: 'Faxineiro' },
-    { codigo: '212405', titulo: 'Analista de sistemas' }, // GG 2 — nível superior
-    { codigo: '142105', titulo: 'Gerente administrativo' }, // GG 1 — direção/gerência
-    { codigo: '351305', titulo: 'Técnico em administração' }, // GG 3 — técnico
-    { codigo: '010105', titulo: 'Oficial general' }, // GG 0 — militar
+    { codigo: '411010', titulo: 'Assistente administrativo', exigeFormacaoProfissional: true, livro: 1 as const },
+    { codigo: '514320', titulo: 'Faxineiro', exigeFormacaoProfissional: true, livro: 1 as const },
+    { codigo: '212405', titulo: 'Analista de sistemas', exigeFormacaoProfissional: false, livro: 1 as const }, // GG 2 — nível superior
+    { codigo: '142105', titulo: 'Gerente administrativo', exigeFormacaoProfissional: false, livro: 1 as const }, // GG 1 — direção/gerência
+    { codigo: '351305', titulo: 'Técnico em administração', exigeFormacaoProfissional: false, livro: 1 as const }, // GG 3 — técnico
+    { codigo: '010105', titulo: 'Oficial general', exigeFormacaoProfissional: false, livro: 1 as const }, // GG 0 — militar
   ],
 };
 
@@ -55,7 +55,7 @@ describe('CalculoService', () => {
     expect(r.deficit).toBe(1);
   });
 
-  it('exclui da base os Grandes Grupos 0, 1, 2 e 3', async () => {
+  it('exclui da base os CBOs sem exigência de formação profissional (art. 429)', async () => {
     const r = await calcular([
       { cbo: '411010', tipo: 'CLT', quantidade: 10 }, // entra
       { cbo: '010105', tipo: 'CLT', quantidade: 1 },
@@ -66,9 +66,7 @@ describe('CalculoService', () => {
     expect(r.base).toBe(10);
     expect(r.composicao.excluidosPeloCbo).toBe(10);
     const motivos = r.itens.filter((i) => !i.entraNaBase).map((i) => i.motivo);
-    expect(motivos.some((m) => m.includes('direção e gerência'))).toBe(true);
-    expect(motivos.some((m) => m.includes('nível superior'))).toBe(true);
-    expect(motivos.some((m) => m.includes('técnicos de nível médio'))).toBe(true);
+    expect(motivos.every((m) => m.includes('não demanda formação profissional'))).toBe(true);
   });
 
   it('PCD conta na base; estagiário e aprendiz não contam', async () => {

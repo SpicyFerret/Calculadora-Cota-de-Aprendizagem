@@ -10,6 +10,16 @@ export const TIPOS: { valor: TipoVinculo; rotulo: string }[] = [
 export interface Ocupacao {
   codigo: string;
   titulo: string;
+  /**
+   * Se a família ocupacional (4 primeiros dígitos) demanda formação profissional
+   * para efeitos do cálculo da cota, segundo a ficha do MTE (art. 429 da CLT) —
+   * fonte oficial, não uma heurística por Grande Grupo. Ver scraper/scraper.py.
+   */
+  exigeFormacaoProfissional: boolean;
+  /** Em qual Livro da CBO (1 ou 2) a ficha desta família está. */
+  livro: 1 | 2;
+  /** Página (1-based) do Livro onde a ficha começa; ausente para famílias sem ficha nos livros. */
+  paginaLivro?: number;
 }
 
 export interface BaseCbo {
@@ -34,7 +44,6 @@ export interface GrupoEstabelecimento {
 
 export interface Classificacao {
   entra: boolean;
-  grandeGrupo: number;
   motivo: string;
 }
 

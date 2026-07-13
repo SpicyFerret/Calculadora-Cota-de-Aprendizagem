@@ -7,9 +7,9 @@ const BASE_TESTE = {
   geradoEm: '2026-07-10',
   fonte: 'teste',
   ocupacoes: [
-    { codigo: '411010', titulo: 'Assistente administrativo' },
-    { codigo: '514320', titulo: 'Faxineiro' },
-    { codigo: '212405', titulo: 'Analista de sistemas' },
+    { codigo: '411010', titulo: 'Assistente administrativo', exigeFormacaoProfissional: true, livro: 1 as const },
+    { codigo: '514320', titulo: 'Faxineiro', exigeFormacaoProfissional: true, livro: 1 as const },
+    { codigo: '212405', titulo: 'Analista de sistemas', exigeFormacaoProfissional: false, livro: 1 as const },
   ],
 };
 
