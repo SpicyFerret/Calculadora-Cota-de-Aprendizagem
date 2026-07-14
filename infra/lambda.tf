@@ -1,6 +1,7 @@
-# boto3 já existe no runtime, mas pypdf (leitura dos Livros da CBO em PDF) não
-# — precisa ser vendorado no zip. O tofu apply roda no runner do GitHub Actions
-# (Linux), daí o local-exec assumir um shell POSIX com python/pip disponíveis.
+# boto3 já existe no runtime, mas requests/beautifulsoup4 (consulta ao vivo
+# em cbo.mte.gov.br) não — precisam ser vendorados no zip. O tofu apply roda
+# no runner do GitHub Actions (Linux), daí o local-exec assumir um shell
+# POSIX com python/pip disponíveis.
 resource "null_resource" "pacote_scraper" {
   triggers = {
     requirements_hash = filemd5("${path.module}/../scraper/requirements.txt")
@@ -34,13 +35,13 @@ resource "aws_lambda_function" "atualiza_cbo" {
 
   runtime = "python3.12"
   handler = "scraper.handler"
-  # Medido localmente: baixar (~4s) + fazer parsing em Python puro (pypdf) dos
-  # ~17MB dos Livros 1 e 2 leva ~20s de CPU num notebook. Na Lambda, CPU escala
-  # com a memória (1024MB ≈ meio vCPU) — 512MB deixaria pouca folga. memory_size
-  # mais alto tende a sair de custo parecido (menos GB-segundo por rodar mais
-  # rápido); timeout generoso cobre variação de rede até o gov.br.
-  timeout       = 300
-  memory_size   = 1024
+  # Trabalho é de rede (consulta ao vivo às ~624 famílias em cbo.mte.gov.br,
+  # 6 sessões em paralelo), não de CPU como era com o parsing de PDF — medido
+  # localmente em ~1min no total. memory_size baixo é suficiente (só precisa
+  # de folga pro pool de threads); timeout generoso cobre variação de rede e
+  # os retries por família até o site antigo do MTE.
+  timeout       = 180
+  memory_size   = 256
   architectures = ["arm64"]
 
   environment {

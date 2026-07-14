@@ -15,10 +15,6 @@ export interface Ocupacao {
    * fonte oficial, não uma heurística por Grande Grupo. Ver scraper/scraper.py.
    */
   exigeFormacaoProfissional: boolean;
-  /** Em qual Livro da CBO (1 ou 2) a ficha desta família está. */
-  livro: 1 | 2;
-  /** Página (1-based) do Livro onde a ficha começa; ausente para famílias sem ficha nos livros. */
-  paginaLivro?: number;
 }
 
 export interface BaseCbo {
@@ -66,6 +62,10 @@ export interface ItemResultado {
   podeExcluirManualmente: boolean;
   /** Se esta linha foi marcada como cargo de confiança já na entrada (form/planilha). */
   cargoConfianca: boolean;
+  /** Incluído manualmente apesar de a CBO não exigir formação profissional. */
+  overrideIncluido: boolean;
+  /** Linhas cujo CBO oficialmente não entra podem ser incluídas manualmente. */
+  podeIncluirManualmente: boolean;
 }
 
 export interface ComposicaoQuadro {

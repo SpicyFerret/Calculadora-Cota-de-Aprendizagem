@@ -175,14 +175,23 @@
                     Excluir
                   </mat-slide-toggle>
                 }
+                @if (item.podeIncluirManualmente) {
+                  <mat-slide-toggle
+                    [checked]="item.overrideIncluido"
+                    (change)="estado.alternarInclusaoManual(item.codigo)"
+                    matTooltip="Incluir manualmente na base, mesmo a CBO não exigindo formação profissional"
+                  >
+                    Incluir
+                  </mat-slide-toggle>
+                }
                 <a
                   matIconButton
                   data-ajuda="conferir-cbo"
                   [href]="cbo.linkFicha(item.codigo)"
                   target="_blank"
                   rel="noopener"
-                  [matTooltip]="'Conferir a ficha desta família no ' + cbo.descricaoFicha(item.codigo) + ' da CBO (MTE)'"
-                  [attr.aria-label]="'Abrir a ficha desta família — ' + cbo.descricaoFicha(item.codigo) + ' da CBO'"
+                  [matTooltip]="'Conferir na busca oficial do MTE — digite o código da família ' + cbo.descricaoFicha(item.codigo)"
+                  [attr.aria-label]="'Abrir a busca oficial da CBO no MTE para conferir a família ' + cbo.descricaoFicha(item.codigo)"
                 >
                   <mat-icon>open_in_new</mat-icon>
                 </a>

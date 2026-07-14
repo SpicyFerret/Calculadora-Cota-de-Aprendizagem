@@ -10,21 +10,15 @@ describe('CboService', () => {
       geradoEm: '2026-07-10',
       fonte: 'teste',
       ocupacoes: [
-        { codigo: '411010', titulo: 'Assistente administrativo', exigeFormacaoProfissional: true, livro: 1, paginaLivro: 696 },
-        { codigo: '411005', titulo: 'Auxiliar de escritório', exigeFormacaoProfissional: true, livro: 1, paginaLivro: 696 },
-        {
-          codigo: '212405',
-          titulo: 'Analista de desenvolvimento de sistemas',
-          exigeFormacaoProfissional: false,
-          livro: 1,
-          paginaLivro: 182,
-        },
-        { codigo: '514320', titulo: 'Vendedor', exigeFormacaoProfissional: true, livro: 1, paginaLivro: 400 },
-        { codigo: '992225', titulo: 'Trabalhador de manutenção', exigeFormacaoProfissional: true, livro: 2, paginaLivro: 500 },
-        { codigo: '010105', titulo: 'Oficial das forças armadas', exigeFormacaoProfissional: false, livro: 1, paginaLivro: 1 },
-        { codigo: '142105', titulo: 'Diretor geral', exigeFormacaoProfissional: false, livro: 1, paginaLivro: 50 },
-        { codigo: '351305', titulo: 'Técnico de nível médio', exigeFormacaoProfissional: false, livro: 1, paginaLivro: 300 },
-        { codigo: '410230', titulo: 'Supervisor de câmbio', exigeFormacaoProfissional: false, livro: 1, paginaLivro: 694 },
+        { codigo: '411010', titulo: 'Assistente administrativo', exigeFormacaoProfissional: true },
+        { codigo: '411005', titulo: 'Auxiliar de escritório', exigeFormacaoProfissional: true },
+        { codigo: '212405', titulo: 'Analista de desenvolvimento de sistemas', exigeFormacaoProfissional: false },
+        { codigo: '514320', titulo: 'Vendedor', exigeFormacaoProfissional: true },
+        { codigo: '992225', titulo: 'Trabalhador de manutenção', exigeFormacaoProfissional: true },
+        { codigo: '010105', titulo: 'Oficial das forças armadas', exigeFormacaoProfissional: false },
+        { codigo: '142105', titulo: 'Diretor geral', exigeFormacaoProfissional: false },
+        { codigo: '351305', titulo: 'Técnico de nível médio', exigeFormacaoProfissional: false },
+        { codigo: '410230', titulo: 'Supervisor de câmbio', exigeFormacaoProfissional: false },
       ],
     });
   });
@@ -54,8 +48,8 @@ describe('CboService', () => {
     expect(servico.pesquisar('')).toEqual([]);
   });
 
-  it('linka a ficha da família na página certa do livro certo', () => {
-    expect(servico.linkFicha('410230')).toContain('livro-1-portal-cbo.pdf#page=694');
-    expect(servico.linkFicha('992225')).toContain('cbo2002_liv2.pdf#page=500');
+  it('linka a busca oficial por código e mostra o código da família a digitar', () => {
+    expect(servico.linkFicha('410230')).toContain('cbo.mte.gov.br');
+    expect(servico.descricaoFicha('4102-30')).toBe('4102');
   });
 });

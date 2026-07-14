@@ -1,5 +1,5 @@
-# pypdf: extrai o texto dos Livros 1 e 2 da CBO (ficha de família ocupacional,
-# usada para saber se a família exige formação profissional — art. 429 CLT).
-# O resto do scraper usa só a stdlib (urllib, csv, json).
-# boto3 (para ler o token no SSM) já vem embutido no runtime Python da Lambda.
-pypdf==6.14.2
+# requests + beautifulsoup4: consulta ao vivo em cbo.mte.gov.br (JSF com
+# ViewState/sessão) pra saber se cada família exige formação profissional —
+# art. 429 CLT. boto3 (SSM) já vem embutido no runtime Python da Lambda.
+requests==2.34.2
+beautifulsoup4==4.15.0
