@@ -59,7 +59,7 @@ export class AjudaService {
       id: 'vinculo',
       titulo: 'Vínculo',
       descricao:
-        'Tipo de contrato da linha: CLT e PCD entram na base de cálculo; estagiários ficam de fora; aprendizes servem para aferir o cumprimento da cota.',
+        'Tipo de contrato da linha: CLT entra na base de cálculo; estagiários ficam de fora; aprendizes servem para aferir o cumprimento da cota.',
       alvo: '[data-ajuda="campo-tipo"]',
       preRequisitos: [ABA_FORMULARIO],
     },

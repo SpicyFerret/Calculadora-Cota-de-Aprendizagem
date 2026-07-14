@@ -11,8 +11,10 @@ export interface ResultadoImportacao {
 
 const TIPOS_RECONHECIDOS: Record<string, TipoVinculo> = {
   clt: 'CLT',
-  pcd: 'PCD',
-  'pessoa com deficiencia': 'PCD',
+  // PCD não existe mais como vínculo à parte (contava igual a CLT e só
+  // confundia) — planilhas antigas com essas marcações continuam funcionando.
+  pcd: 'CLT',
+  'pessoa com deficiencia': 'CLT',
   estagiario: 'ESTAGIARIO',
   estagiaria: 'ESTAGIARIO',
   estagio: 'ESTAGIARIO',
@@ -98,7 +100,7 @@ export class ImportService {
       }
       if (!tipo) {
         erros.push(
-          `Linha ${numeroLinha}: tipo "${valores[colTipo]}" não reconhecido (use CLT, PCD, Estagiário ou Aprendiz).`,
+          `Linha ${numeroLinha}: tipo "${valores[colTipo]}" não reconhecido (use CLT, Estagiário ou Aprendiz).`,
         );
         return;
       }

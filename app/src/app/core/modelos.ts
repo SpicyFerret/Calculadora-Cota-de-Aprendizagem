@@ -1,8 +1,7 @@
-export type TipoVinculo = 'CLT' | 'PCD' | 'ESTAGIARIO' | 'APRENDIZ';
+export type TipoVinculo = 'CLT' | 'ESTAGIARIO' | 'APRENDIZ';
 
 export const TIPOS: { valor: TipoVinculo; rotulo: string }[] = [
   { valor: 'CLT', rotulo: 'CLT' },
-  { valor: 'PCD', rotulo: 'PCD (CLT)' },
   { valor: 'ESTAGIARIO', rotulo: 'Estagiário' },
   { valor: 'APRENDIZ', rotulo: 'Aprendiz' },
 ];
@@ -63,7 +62,7 @@ export interface ItemResultado {
   entraNaBase: boolean;
   motivo: string;
   overrideExcluido: boolean;
-  /** Linhas CLT/PCD com CBO incluso podem ser excluídas manualmente (cargo de confiança). */
+  /** Linhas CLT com CBO incluso podem ser excluídas manualmente (cargo de confiança). */
   podeExcluirManualmente: boolean;
   /** Se esta linha foi marcada como cargo de confiança já na entrada (form/planilha). */
   cargoConfianca: boolean;
