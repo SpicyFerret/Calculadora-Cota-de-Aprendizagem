@@ -6,12 +6,8 @@ const MOTIVO_ENTRA =
 const MOTIVO_NAO_ENTRA =
   'Segundo a ficha oficial do MTE, esta família ocupacional não demanda formação profissional para efeitos do cálculo da cota (art. 429 da CLT)';
 
-/** Mesmas URLs que o scraper usa como fonte (ver scraper/scraper.py). */
-const DOWNLOADS = 'https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/cbo/servicos/downloads';
-const LIVROS_URL: Record<1 | 2, string> = {
-  1: `${DOWNLOADS}/livro-1-portal-cbo.pdf`,
-  2: `${DOWNLOADS}/cbo2002_liv2.pdf`,
-};
+/** Mesmo site que o scraper consulta como fonte (ver scraper/scraper.py). */
+const BUSCA_POR_CODIGO_URL = 'https://cbo.mte.gov.br/cbosite/pages/pesquisas/BuscaPorCodigo.jsf';
 
 @Injectable({ providedIn: 'root' })
 export class CboService {
@@ -90,21 +86,17 @@ export class CboService {
   }
 
   /**
-   * Link para a ficha desta família no Livro oficial da CBO (PDF), na página exata
-   * quando conhecida — troca a antiga consulta no mtecbo.gov.br, que exige sessão
-   * JSF instável demais para ser um link direto e confiável.
+   * Link para a busca oficial por código em cbo.mte.gov.br — o site não tem
+   * URL própria por família (navegação via ViewState/sessão JSF), então não
+   * dá pra linkar direto na ficha; abre a busca para o usuário digitar o
+   * código da família e conferir.
    */
-  linkFicha(codigo: string): string {
-    const ocupacao = this.ocupacoesPorCodigo.get(this.normalizar(codigo));
-    const livro = ocupacao?.livro ?? 1;
-    const url = LIVROS_URL[livro];
-    return ocupacao?.paginaLivro ? `${url}#page=${ocupacao.paginaLivro}` : url;
+  linkFicha(_codigo: string): string {
+    return BUSCA_POR_CODIGO_URL;
   }
 
-  /** Ex.: "Livro 1, página 694" — para exibir onde a ficha está antes de abrir o PDF. */
+  /** Código da família (4 dígitos) a digitar na busca oficial do MTE. */
   descricaoFicha(codigo: string): string {
-    const ocupacao = this.ocupacoesPorCodigo.get(this.normalizar(codigo));
-    const livro = ocupacao?.livro ?? 1;
-    return ocupacao?.paginaLivro ? `Livro ${livro}, página ${ocupacao.paginaLivro}` : `Livro ${livro}`;
+    return this.normalizar(codigo).slice(0, 4);
   }
 }

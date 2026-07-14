@@ -17,15 +17,18 @@ export class EstadoService {
   /** Resultado do estabelecimento selecionado (dashboard/tabela). */
   readonly resultado = computed(() => this.resultados()?.[this.filialSelecionada()] ?? null);
 
-  /** Exclusões manuais (cargo de confiança), por estabelecimento. */
-  private excluidosPorFilial = new Map<number, Set<string>>();
+  /**
+   * Inclusões/exclusões manuais por estabelecimento — true força o CBO para
+   * dentro da base, false força para fora; ausência = classificação automática.
+   */
+  private overridesPorFilial = new Map<number, Map<string, boolean>>();
 
   async calcular(grupos: GrupoEstabelecimento[]): Promise<void> {
     this.processando.set(true);
     this.progresso.set(0);
     this.resultados.set(null);
     this.filialSelecionada.set(0);
-    this.excluidosPorFilial.clear();
+    this.overridesPorFilial.clear();
     const inicio = performance.now();
     try {
       const resultados = await this.calculo.calcularGrupos(grupos, (p) => this.progresso.set(p));
@@ -40,19 +43,28 @@ export class EstadoService {
   }
 
   alternarExclusaoManual(codigo: string): void {
+    this.alternarOverride(codigo, false);
+  }
+
+  alternarInclusaoManual(codigo: string): void {
+    this.alternarOverride(codigo, true);
+  }
+
+  /** Liga/desliga o override para `valorForcado`; alternar de novo volta ao automático. */
+  private alternarOverride(codigo: string, valorForcado: boolean): void {
     const indice = this.filialSelecionada();
     const atual = this.resultados()?.[indice];
     if (!atual) {
       return;
     }
-    const excluidos = this.excluidosPorFilial.get(indice) ?? new Set<string>();
-    if (excluidos.has(codigo)) {
-      excluidos.delete(codigo);
+    const overrides = this.overridesPorFilial.get(indice) ?? new Map<string, boolean>();
+    if (overrides.get(codigo) === valorForcado) {
+      overrides.delete(codigo);
     } else {
-      excluidos.add(codigo);
+      overrides.set(codigo, valorForcado);
     }
-    this.excluidosPorFilial.set(indice, excluidos);
-    const recalculado = this.calculo.recalcular(atual, excluidos);
+    this.overridesPorFilial.set(indice, overrides);
+    const recalculado = this.calculo.recalcular(atual, overrides);
     this.resultados.update((todos) =>
       (todos ?? []).map((r, i) => (i === indice ? recalculado : r)),
     );
@@ -61,7 +73,7 @@ export class EstadoService {
   limpar(): void {
     this.resultados.set(null);
     this.filialSelecionada.set(0);
-    this.excluidosPorFilial.clear();
+    this.overridesPorFilial.clear();
     this.progresso.set(0);
   }
 }

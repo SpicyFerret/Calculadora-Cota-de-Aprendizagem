@@ -166,14 +166,26 @@
             <ng-container matColumnDef="acoes">
               <th mat-header-cell *matHeaderCellDef>Ações</th>
               <td mat-cell *matCellDef="let item" class="acoes">
-                @if (item.podeExcluirManualmente) {
+                @if (item.podeExcluirManualmente || item.podeIncluirManualmente) {
                   <mat-slide-toggle
-                    [checked]="item.overrideExcluido"
-                    (change)="estado.alternarExclusaoManual(item.codigo)"
-                    matTooltip="Excluir da base como cargo de direção ou confiança"
-                  >
-                    Excluir
-                  </mat-slide-toggle>
+                    [checked]="item.entraNaBase"
+                    (change)="
+                      item.podeExcluirManualmente
+                        ? estado.alternarExclusaoManual(item.codigo)
+                        : estado.alternarInclusaoManual(item.codigo)
+                    "
+                    [matTooltip]="
+                      item.podeExcluirManualmente
+                        ? 'Excluir manualmente (CBO exige formação profissional)'
+                        : 'Incluir manualmente (CBO não exige formação profissional)'
+                    "
+                    [aria-label]="
+                      (item.podeExcluirManualmente
+                        ? 'Excluir manualmente (CBO exige formação profissional)'
+                        : 'Incluir manualmente (CBO não exige formação profissional)') +
+                      ' — CBO ' + item.codigo
+                    "
+                  ></mat-slide-toggle>
                 }
                 <a
                   matIconButton
@@ -181,8 +193,8 @@
                   [href]="cbo.linkFicha(item.codigo)"
                   target="_blank"
                   rel="noopener"
-                  [matTooltip]="'Conferir a ficha desta família no ' + cbo.descricaoFicha(item.codigo) + ' da CBO (MTE)'"
-                  [attr.aria-label]="'Abrir a ficha desta família — ' + cbo.descricaoFicha(item.codigo) + ' da CBO'"
+                  [matTooltip]="'Conferir na busca oficial do MTE — digite o código da família ' + cbo.descricaoFicha(item.codigo)"
+                  [attr.aria-label]="'Abrir a busca oficial da CBO no MTE para conferir a família ' + cbo.descricaoFicha(item.codigo)"
                 >
                   <mat-icon>open_in_new</mat-icon>
                 </a>
