@@ -106,16 +106,17 @@ export class ExportService {
     pdf.text('Relatório — Cota de Aprendizagem', 14, 18);
     pdf.setFontSize(9);
     pdf.setTextColor(110);
-    pdf.text(
-      [
-        `Gerado em ${new Date().toLocaleString('pt-BR')}`,
-        `Base CBO de ${this.cbo.geradoEm()} (${this.cbo.fonte()})`,
-      ],
-      14,
-      25,
-    );
+    // pdf.text() com array desenha uma linha por item, mas não quebra uma
+    // linha longa sozinha — a fonte da base (CboService.fonte()) é verbosa
+    // o bastante para estourar a largura da página sem isso.
+    const larguraTexto = pdf.internal.pageSize.getWidth() - 28;
+    const linhasCabecalho = [
+      `Gerado em ${new Date().toLocaleString('pt-BR')}`,
+      `Base CBO de ${this.cbo.geradoEm()} (${this.cbo.fonte()})`,
+    ].flatMap((linha) => pdf.splitTextToSize(linha, larguraTexto) as string[]);
+    pdf.text(linhasCabecalho, 14, 25);
 
-    let posicao = 36;
+    let posicao = 25 + linhasCabecalho.length * 4 + 3;
     for (const r of resultados) {
       autoTable(pdf, {
         startY: posicao,
