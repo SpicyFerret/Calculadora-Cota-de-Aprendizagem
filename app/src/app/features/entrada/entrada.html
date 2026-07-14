@@ -96,6 +96,24 @@
                       <input matInput type="number" min="1" step="1" [(ngModel)]="linha.quantidade" />
                     </mat-form-field>
 
+                    <mat-form-field
+                      class="campo-confianca"
+                      data-ajuda="campo-confianca"
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                    >
+                      <mat-label>Cargo de confiança</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        min="0"
+                        step="1"
+                        [attr.max]="linha.quantidade"
+                        [(ngModel)]="linha.confianca"
+                        matTooltip="Quantas das pessoas desta linha são cargo de direção ou confiança — ficam de fora da base de cálculo. 0 = nenhuma."
+                      />
+                    </mat-form-field>
+
                     <button
                       matIconButton
                       class="remover"
@@ -139,7 +157,7 @@
             <button matButton="outlined" (click)="seletor.click()">Escolher arquivo</button>
             <input #seletor type="file" accept=".csv,.xlsx,.xls" hidden (change)="aoEscolherArquivo($event)" />
             <p class="dica">
-              Tipos aceitos: CLT, PCD, Estagiário, Aprendiz.
+              Tipos aceitos: CLT, Estagiário, Aprendiz.
               Uma coluna <code>CNPJ</code> opcional separa matriz e filiais.
             </p>
 

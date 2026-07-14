@@ -7,12 +7,12 @@ const BASE_TESTE = {
   geradoEm: '2026-07-10',
   fonte: 'teste',
   ocupacoes: [
-    { codigo: '411010', titulo: 'Assistente administrativo', exigeFormacaoProfissional: true, livro: 1 as const },
-    { codigo: '514320', titulo: 'Faxineiro', exigeFormacaoProfissional: true, livro: 1 as const },
-    { codigo: '212405', titulo: 'Analista de sistemas', exigeFormacaoProfissional: false, livro: 1 as const }, // GG 2 — nível superior
-    { codigo: '142105', titulo: 'Gerente administrativo', exigeFormacaoProfissional: false, livro: 1 as const }, // GG 1 — direção/gerência
-    { codigo: '351305', titulo: 'Técnico em administração', exigeFormacaoProfissional: false, livro: 1 as const }, // GG 3 — técnico
-    { codigo: '010105', titulo: 'Oficial general', exigeFormacaoProfissional: false, livro: 1 as const }, // GG 0 — militar
+    { codigo: '411010', titulo: 'Assistente administrativo', exigeFormacaoProfissional: true },
+    { codigo: '514320', titulo: 'Faxineiro', exigeFormacaoProfissional: true },
+    { codigo: '212405', titulo: 'Analista de sistemas', exigeFormacaoProfissional: false }, // GG 2 — nível superior
+    { codigo: '142105', titulo: 'Gerente administrativo', exigeFormacaoProfissional: false }, // GG 1 — direção/gerência
+    { codigo: '351305', titulo: 'Técnico em administração', exigeFormacaoProfissional: false }, // GG 3 — técnico
+    { codigo: '010105', titulo: 'Oficial general', exigeFormacaoProfissional: false }, // GG 0 — militar
   ],
 };
 
@@ -24,8 +24,8 @@ describe('CalculoService', () => {
     TestBed.inject(CboService).usarBase(BASE_TESTE);
   });
 
-  async function calcular(linhas: LinhaQuadro[], excluidos: Set<string> = new Set()) {
-    return servico.calcular(linhas, excluidos);
+  async function calcular(linhas: LinhaQuadro[], overrides: Map<string, boolean> = new Map()) {
+    return servico.calcular(linhas, overrides);
   }
 
   it('arredonda frações para cima (base 47 → mínimo 3, máximo 8)', async () => {
@@ -69,10 +69,9 @@ describe('CalculoService', () => {
     expect(motivos.every((m) => m.includes('não demanda formação profissional'))).toBe(true);
   });
 
-  it('PCD conta na base; estagiário e aprendiz não contam', async () => {
+  it('CLT conta na base; estagiário e aprendiz não contam', async () => {
     const r = await calcular([
-      { cbo: '411010', tipo: 'CLT', quantidade: 10 },
-      { cbo: '411010', tipo: 'PCD', quantidade: 2 },
+      { cbo: '411010', tipo: 'CLT', quantidade: 12 },
       { cbo: '411010', tipo: 'ESTAGIARIO', quantidade: 5 },
       { cbo: '411010', tipo: 'APRENDIZ', quantidade: 1 },
     ]);
@@ -128,19 +127,86 @@ describe('CalculoService', () => {
         { cbo: '411010', tipo: 'CLT', quantidade: 10 },
         { cbo: '514320', tipo: 'CLT', quantidade: 10 },
       ],
-      new Set(['514320']),
+      new Map([['514320', false]]),
     );
     expect(r.base).toBe(10);
     expect(r.composicao.excluidosManualmente).toBe(10);
   });
 
+  it('inclusão manual põe na base um CBO que oficialmente não entra', async () => {
+    const r = await calcular(
+      [{ cbo: '212405', tipo: 'CLT', quantidade: 4 }], // GG2, não exige formação
+      new Map([['212405', true]]),
+    );
+    expect(r.base).toBe(4);
+    const item = r.itens[0];
+    expect(item.entraNaBase).toBe(true);
+    expect(item.overrideIncluido).toBe(true);
+    expect(item.podeIncluirManualmente).toBe(true);
+    expect(item.motivo).toContain('Incluído manualmente');
+  });
+
+  it('sem override, CBO que não exige formação profissional fica fora mas é incluível', async () => {
+    const r = await calcular([{ cbo: '212405', tipo: 'CLT', quantidade: 4 }]);
+    const item = r.itens[0];
+    expect(item.entraNaBase).toBe(false);
+    expect(item.podeIncluirManualmente).toBe(true);
+    expect(item.overrideIncluido).toBe(false);
+  });
+
+  it('quantidadeConfianca separa e exclui só a parcela marcada de um CBO', async () => {
+    const r = await calcular([{ cbo: '411010', tipo: 'CLT', quantidade: 5, quantidadeConfianca: 1 }]);
+    expect(r.itens.length).toBe(2);
+    expect(r.base).toBe(4);
+    expect(r.composicao.excluidosCargoConfianca).toBe(1);
+    expect(r.composicao.excluidosManualmente).toBe(0);
+    const excluido = r.itens.find((i) => i.cargoConfianca);
+    expect(excluido?.quantidade).toBe(1);
+    expect(excluido?.entraNaBase).toBe(false);
+    expect(excluido?.motivo).toContain('sinalizado na entrada');
+    const normal = r.itens.find((i) => !i.cargoConfianca);
+    expect(normal?.quantidade).toBe(4);
+    expect(normal?.entraNaBase).toBe(true);
+  });
+
+  it('quantidadeConfianca soma entre linhas repetidas do mesmo CBO antes de separar', async () => {
+    const r = await calcular([
+      { cbo: '411010', tipo: 'CLT', quantidade: 3 },
+      { cbo: '411010', tipo: 'CLT', quantidade: 2, quantidadeConfianca: 1 },
+    ]);
+    expect(r.itens.length).toBe(2);
+    expect(r.base).toBe(4); // 3 + (2 - 1)
+    expect(r.composicao.excluidosCargoConfianca).toBe(1);
+  });
+
+  it('exclusão manual (toggle) e cargo de confiança (entrada) ficam em buckets separados', async () => {
+    const r = await calcular(
+      [
+        { cbo: '411010', tipo: 'CLT', quantidade: 5, quantidadeConfianca: 1 },
+        { cbo: '514320', tipo: 'CLT', quantidade: 10 },
+      ],
+      new Map([['514320', false]]),
+    );
+    expect(r.composicao.excluidosCargoConfianca).toBe(1);
+    expect(r.composicao.excluidosManualmente).toBe(10);
+  });
+
   it('recalcular reflete mudança nas exclusões manuais', async () => {
     const original = await calcular([{ cbo: '411010', tipo: 'CLT', quantidade: 20 }]);
-    const alterado = servico.recalcular(original, new Set(['411010']));
+    const alterado = servico.recalcular(original, new Map([['411010', false]]));
     expect(alterado.base).toBe(0);
     expect(alterado.minimo).toBe(0);
-    const revertido = servico.recalcular(alterado, new Set());
+    const revertido = servico.recalcular(alterado, new Map());
     expect(revertido.base).toBe(20);
+  });
+
+  it('recalcular reflete mudança nas inclusões manuais', async () => {
+    const original = await calcular([{ cbo: '212405', tipo: 'CLT', quantidade: 20 }]);
+    expect(original.base).toBe(0);
+    const alterado = servico.recalcular(original, new Map([['212405', true]]));
+    expect(alterado.base).toBe(20);
+    const revertido = servico.recalcular(alterado, new Map());
+    expect(revertido.base).toBe(0);
   });
 
   it('CBO não encontrado fica fora da base, com motivo', async () => {
@@ -167,7 +233,7 @@ describe('CalculoService', () => {
     const percentuais: number[] = [];
     await servico.calcular(
       [{ cbo: '411010', tipo: 'CLT', quantidade: 10 }],
-      new Set(),
+      new Map(),
       (p) => percentuais.push(p),
     );
     expect(percentuais.at(-1)).toBe(100);

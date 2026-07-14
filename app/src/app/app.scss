@@ -19,6 +19,12 @@
 
 .topo {
   gap: 14px;
+  // Fixo no topo: fica visível ao rolar a página, acima do conteúdo mas
+  // atrás do painel de ajuda (z-index 95) e seu botão lateral (90).
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
   // Azul-marinho da marca em ambos os temas; a logo usada é a variante
   // "fonte branca", feita para fundo escuro.
   background: var(--marca-azul);
@@ -36,10 +42,26 @@
 
   .titulo {
     font-size: 1.05rem;
+    // Toolbar do Material não deixa itens flex encolherem abaixo do texto
+    // inteiro por padrão (white-space: nowrap + min-width: auto) — em telas
+    // estreitas isso empurrava os botões para fora e criava rolagem horizontal.
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .espaco {
     flex: 1;
+  }
+
+  .logo {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .topo .titulo {
+    display: none;
   }
 }
 

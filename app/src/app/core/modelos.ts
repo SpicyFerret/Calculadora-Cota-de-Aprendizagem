@@ -1,8 +1,7 @@
-export type TipoVinculo = 'CLT' | 'PCD' | 'ESTAGIARIO' | 'APRENDIZ';
+export type TipoVinculo = 'CLT' | 'ESTAGIARIO' | 'APRENDIZ';
 
 export const TIPOS: { valor: TipoVinculo; rotulo: string }[] = [
   { valor: 'CLT', rotulo: 'CLT' },
-  { valor: 'PCD', rotulo: 'PCD (CLT)' },
   { valor: 'ESTAGIARIO', rotulo: 'Estagiário' },
   { valor: 'APRENDIZ', rotulo: 'Aprendiz' },
 ];
@@ -16,10 +15,6 @@ export interface Ocupacao {
    * fonte oficial, não uma heurística por Grande Grupo. Ver scraper/scraper.py.
    */
   exigeFormacaoProfissional: boolean;
-  /** Em qual Livro da CBO (1 ou 2) a ficha desta família está. */
-  livro: 1 | 2;
-  /** Página (1-based) do Livro onde a ficha começa; ausente para famílias sem ficha nos livros. */
-  paginaLivro?: number;
 }
 
 export interface BaseCbo {
@@ -33,6 +28,13 @@ export interface LinhaQuadro {
   cbo: string;
   tipo: TipoVinculo;
   quantidade: number;
+  /**
+   * Quantas das `quantidade` pessoas desta linha são cargo de direção ou
+   * confiança (excluídas da base) — permite excluir só uma parte das pessoas
+   * de um CBO (ex.: 1 de 5) sem precisar de uma linha separada. Ausente ou 0
+   * equivale a nenhuma. O CalculoService separa essa parcela ao agregar.
+   */
+  quantidadeConfianca?: number;
 }
 
 /** Um estabelecimento (matriz ou filial): a cota é apurada por CNPJ. */
@@ -56,8 +58,14 @@ export interface ItemResultado {
   entraNaBase: boolean;
   motivo: string;
   overrideExcluido: boolean;
-  /** Linhas CLT/PCD com CBO incluso podem ser excluídas manualmente (cargo de confiança). */
+  /** Linhas CLT com CBO incluso podem ser excluídas manualmente (cargo de confiança). */
   podeExcluirManualmente: boolean;
+  /** Se esta linha foi marcada como cargo de confiança já na entrada (form/planilha). */
+  cargoConfianca: boolean;
+  /** Incluído manualmente apesar de a CBO não exigir formação profissional. */
+  overrideIncluido: boolean;
+  /** Linhas cujo CBO oficialmente não entra podem ser incluídas manualmente. */
+  podeIncluirManualmente: boolean;
 }
 
 export interface ComposicaoQuadro {
@@ -65,7 +73,10 @@ export interface ComposicaoQuadro {
   excluidosPeloCbo: number;
   aprendizes: number;
   estagiarios: number;
+  /** Excluídos pelo toggle "Excluir" na tabela de resultado, depois de calculado. */
   excluidosManualmente: number;
+  /** Excluídos por já terem sido sinalizados como cargo de confiança/direção no formulário ou na planilha. */
+  excluidosCargoConfianca: number;
 }
 
 export interface ResultadoCalculo {

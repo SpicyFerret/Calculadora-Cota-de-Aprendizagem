@@ -4,6 +4,8 @@
 
 mat-card-header {
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
 
   .espaco {
     flex: 1;
@@ -12,6 +14,18 @@ mat-card-header {
   .troca-visao {
     mat-icon {
       margin-right: 6px;
+    }
+  }
+}
+
+// Telas estreitas: o toggle "Visão geral / Detalhado" não cabe ao lado do
+// título — passa para a linha de baixo e ocupa a largura toda.
+@media (max-width: 480px) {
+  mat-card-header .troca-visao {
+    flex-basis: 100%;
+
+    mat-button-toggle {
+      flex: 1;
     }
   }
 }
@@ -198,6 +212,13 @@ mat-card-header {
   }
 
   .acoes {
+    // O Material aplica overflow:hidden + text-overflow:ellipsis por padrão em
+    // toda .mat-mdc-cell; como essa célula tem toggle + texto + botão de ícone,
+    // qualquer diferença de cálculo de largura da coluna entre navegadores (ex.:
+    // Firefox vs Chromium no auto-layout da tabela) pode cortar o conteúdo e
+    // esconder o botão inteiro atrás de "…". Aqui isso nunca deve truncar.
+    overflow: visible;
+    text-overflow: clip;
     white-space: nowrap;
 
     mat-slide-toggle {

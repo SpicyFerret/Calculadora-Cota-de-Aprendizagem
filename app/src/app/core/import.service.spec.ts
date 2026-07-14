@@ -7,9 +7,9 @@ const BASE_TESTE = {
   geradoEm: '2026-07-10',
   fonte: 'teste',
   ocupacoes: [
-    { codigo: '411010', titulo: 'Assistente administrativo', exigeFormacaoProfissional: true, livro: 1 as const },
-    { codigo: '514320', titulo: 'Faxineiro', exigeFormacaoProfissional: true, livro: 1 as const },
-    { codigo: '212405', titulo: 'Analista de sistemas', exigeFormacaoProfissional: false, livro: 1 as const },
+    { codigo: '411010', titulo: 'Assistente administrativo', exigeFormacaoProfissional: true },
+    { codigo: '514320', titulo: 'Faxineiro', exigeFormacaoProfissional: true },
+    { codigo: '212405', titulo: 'Analista de sistemas', exigeFormacaoProfissional: false },
   ],
 };
 
@@ -33,7 +33,6 @@ describe('ImportService', () => {
       planilha([
         ['CBO', 'TIPO', 'QUANTIDADE'],
         ['411010', 'CLT', 12],
-        ['4110-10', 'PCD', 1],
         ['514320', 'Estagiário', 2],
         ['212405', 'Aprendiz', 1],
       ]),
@@ -43,10 +42,63 @@ describe('ImportService', () => {
     expect(r.grupos.length).toBe(1);
     expect(r.grupos[0].cnpj).toBe('');
     expect(r.grupos[0].linhas).toEqual([
-      { cbo: '411010', tipo: 'CLT', quantidade: 12 },
-      { cbo: '411010', tipo: 'PCD', quantidade: 1 },
-      { cbo: '514320', tipo: 'ESTAGIARIO', quantidade: 2 },
-      { cbo: '212405', tipo: 'APRENDIZ', quantidade: 1 },
+      { cbo: '411010', tipo: 'CLT', quantidade: 12, quantidadeConfianca: 0 },
+      { cbo: '514320', tipo: 'ESTAGIARIO', quantidade: 2, quantidadeConfianca: 0 },
+      { cbo: '212405', tipo: 'APRENDIZ', quantidade: 1, quantidadeConfianca: 0 },
+    ]);
+  });
+
+  it('PCD não existe mais como vínculo — é reconhecido como sinônimo de CLT (compatibilidade)', async () => {
+    const r = await servico.importarPlanilha(
+      planilha([
+        ['CBO', 'TIPO', 'QUANTIDADE'],
+        ['4110-10', 'PCD', 1],
+      ]),
+    );
+    expect(r.erros).toEqual([]);
+    expect(r.grupos[0].linhas).toEqual([
+      { cbo: '411010', tipo: 'CLT', quantidade: 1, quantidadeConfianca: 0 },
+    ]);
+  });
+
+  it('formato agregado: CARGO_CONFIANCA é numérico (quantas da linha)', async () => {
+    const r = await servico.importarPlanilha(
+      planilha([
+        ['CBO', 'TIPO', 'QUANTIDADE', 'CARGO_CONFIANCA'],
+        ['411010', 'CLT', 5, 1],
+        ['514320', 'CLT', 3, ''],
+      ]),
+    );
+    expect(r.erros).toEqual([]);
+    expect(r.grupos[0].linhas).toEqual([
+      { cbo: '411010', tipo: 'CLT', quantidade: 5, quantidadeConfianca: 1 },
+      { cbo: '514320', tipo: 'CLT', quantidade: 3, quantidadeConfianca: 0 },
+    ]);
+  });
+
+  it('formato agregado: acusa erro quando CARGO_CONFIANCA excede a QUANTIDADE', async () => {
+    const r = await servico.importarPlanilha(
+      planilha([
+        ['CBO', 'TIPO', 'QUANTIDADE', 'CARGO_CONFIANCA'],
+        ['411010', 'CLT', 2, 5],
+      ]),
+    );
+    expect(r.grupos[0]?.linhas ?? []).toEqual([]);
+    expect(r.erros[0]).toContain('maior que a quantidade');
+  });
+
+  it('formato lista: CARGO_CONFIANCA é booleano (SIM/NAO) por pessoa', async () => {
+    const r = await servico.importarPlanilha(
+      planilha([
+        ['NOME', 'CBO', 'TIPO', 'CARGO_CONFIANCA'],
+        ['Ana', '411010', 'CLT', 'NAO'],
+        ['Bruno', '411010', 'CLT', 'SIM'],
+      ]),
+    );
+    expect(r.erros).toEqual([]);
+    expect(r.grupos[0].linhas).toEqual([
+      { cbo: '411010', tipo: 'CLT', quantidade: 1, quantidadeConfianca: 0 },
+      { cbo: '411010', tipo: 'CLT', quantidade: 1, quantidadeConfianca: 1 },
     ]);
   });
 

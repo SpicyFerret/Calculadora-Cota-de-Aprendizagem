@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { CboService } from './cbo.service';
-import { GrupoEstabelecimento, ItemResultado, LinhaQuadro, ResultadoCalculo } from './modelos';
+import { GrupoEstabelecimento, ItemResultado, LinhaQuadro, ResultadoCalculo, TipoVinculo } from './modelos';
 
 const PERCENTUAL_MINIMO = 5;
 const PERCENTUAL_MAXIMO = 15;
@@ -21,7 +21,7 @@ export class CalculoService {
    */
   async calcular(
     linhas: LinhaQuadro[],
-    excluidosManualmente: ReadonlySet<string>,
+    overridesManuais: ReadonlyMap<string, boolean>,
     aoProgredir?: (percentual: number) => void,
     cnpj = '',
   ): Promise<ResultadoCalculo> {
@@ -30,7 +30,7 @@ export class CalculoService {
 
     for (let i = 0; i < agregadas.length; i += TAMANHO_LOTE) {
       for (const linha of agregadas.slice(i, i + TAMANHO_LOTE)) {
-        itens.push(this.classificarLinha(linha, excluidosManualmente));
+        itens.push(this.classificarLinha(linha, overridesManuais));
       }
       aoProgredir?.(Math.round(((i + TAMANHO_LOTE) / Math.max(agregadas.length, 1)) * 100));
       await new Promise((resolve) => setTimeout(resolve));
@@ -49,7 +49,7 @@ export class CalculoService {
     for (let g = 0; g < grupos.length; g++) {
       const resultado = await this.calcular(
         grupos[g].linhas,
-        new Set(),
+        new Map(),
         (p) => aoProgredir?.(Math.round(((g + p / 100) / grupos.length) * 100)),
         grupos[g].cnpj,
       );
@@ -59,43 +59,65 @@ export class CalculoService {
     return resultados;
   }
 
-  /** Recalcula de forma síncrona (usado ao alternar exclusões manuais). */
+  /** Recalcula de forma síncrona (usado ao alternar inclusões/exclusões manuais). */
   recalcular(
     resultado: ResultadoCalculo,
-    excluidosManualmente: ReadonlySet<string>,
+    overridesManuais: ReadonlyMap<string, boolean>,
   ): ResultadoCalculo {
     const linhas = resultado.itens.map((i) => ({
       cbo: i.codigo,
       tipo: i.tipo,
       quantidade: i.quantidade,
+      quantidadeConfianca: i.cargoConfianca ? i.quantidade : 0,
     }));
-    const itens = linhas.map((l) => this.classificarLinha(l, excluidosManualmente));
+    const itens = linhas.map((l) => this.classificarLinha(l, overridesManuais));
     return this.consolidar(itens, resultado.cnpj);
   }
 
-  /** Soma quantidades de linhas repetidas (mesmo CBO + tipo). */
+  /**
+   * Separa a parcela de cargo de confiança de cada linha (quantidadeConfianca)
+   * do restante, e soma quantidades repetidas (mesmo CBO + tipo + condição) —
+   * assim a parcela de confiança fica num grupo à parte do resto do mesmo CBO,
+   * e pode ser excluída sozinha (exclusão parcial).
+   */
   private agregar(linhas: LinhaQuadro[]): LinhaQuadro[] {
-    const mapa = new Map<string, LinhaQuadro>();
-    for (const linha of linhas) {
-      const codigo = this.cbo.normalizar(linha.cbo);
-      const chave = `${codigo}|${linha.tipo}`;
+    const mapa = new Map<string, { cbo: string; tipo: TipoVinculo; quantidade: number; confianca: boolean }>();
+    const somar = (codigo: string, tipo: TipoVinculo, quantidade: number, confianca: boolean) => {
+      if (quantidade <= 0) {
+        return;
+      }
+      const chave = `${codigo}|${tipo}|${confianca}`;
       const atual = mapa.get(chave);
       if (atual) {
-        atual.quantidade += linha.quantidade;
+        atual.quantidade += quantidade;
       } else {
-        mapa.set(chave, { cbo: codigo, tipo: linha.tipo, quantidade: linha.quantidade });
+        mapa.set(chave, { cbo: codigo, tipo, quantidade, confianca });
       }
+    };
+    for (const linha of linhas) {
+      const codigo = this.cbo.normalizar(linha.cbo);
+      const confianca = Math.min(Math.max(Math.trunc(linha.quantidadeConfianca ?? 0), 0), linha.quantidade);
+      somar(codigo, linha.tipo, linha.quantidade - confianca, false);
+      somar(codigo, linha.tipo, confianca, true);
     }
-    return [...mapa.values()].sort((a, b) => a.cbo.localeCompare(b.cbo));
+    return [...mapa.values()]
+      .sort((a, b) => a.cbo.localeCompare(b.cbo))
+      .map((g) => ({
+        cbo: g.cbo,
+        tipo: g.tipo,
+        quantidade: g.quantidade,
+        quantidadeConfianca: g.confianca ? g.quantidade : 0,
+      }));
   }
 
   private classificarLinha(
     linha: LinhaQuadro,
-    excluidosManualmente: ReadonlySet<string>,
+    overridesManuais: ReadonlyMap<string, boolean>,
   ): ItemResultado {
     const codigo = this.cbo.normalizar(linha.cbo);
     const titulo = this.cbo.titulo(codigo);
     const encontrado = titulo !== null;
+    const cargoConfianca = (linha.quantidadeConfianca ?? 0) > 0;
 
     const comum = {
       codigo,
@@ -103,8 +125,11 @@ export class CalculoService {
       encontrado,
       tipo: linha.tipo,
       quantidade: linha.quantidade,
+      cargoConfianca,
       overrideExcluido: false,
       podeExcluirManualmente: false,
+      overrideIncluido: false,
+      podeIncluirManualmente: false,
     };
 
     if (linha.tipo === 'APRENDIZ') {
@@ -118,10 +143,29 @@ export class CalculoService {
     }
 
     const classificacao = this.cbo.classificar(codigo);
+    const override = overridesManuais.get(codigo);
+
     if (!classificacao.entra) {
-      return { ...comum, entraNaBase: false, motivo: classificacao.motivo };
+      if (override === true) {
+        return {
+          ...comum,
+          entraNaBase: true,
+          overrideIncluido: true,
+          podeIncluirManualmente: true,
+          motivo: 'Incluído manualmente (apesar de a CBO não exigir formação profissional)',
+        };
+      }
+      return { ...comum, entraNaBase: false, podeIncluirManualmente: true, motivo: classificacao.motivo };
     }
-    if (excluidosManualmente.has(codigo)) {
+    if (cargoConfianca) {
+      return {
+        ...comum,
+        entraNaBase: false,
+        overrideExcluido: true,
+        motivo: 'Cargo de direção ou confiança (sinalizado na entrada)',
+      };
+    }
+    if (override === false) {
       return {
         ...comum,
         entraNaBase: false,
@@ -143,6 +187,7 @@ export class CalculoService {
       aprendizes: 0,
       estagiarios: 0,
       excluidosManualmente: 0,
+      excluidosCargoConfianca: 0,
     };
 
     for (const item of itens) {
@@ -155,6 +200,8 @@ export class CalculoService {
       } else if (item.entraNaBase) {
         base += item.quantidade;
         composicao.entramNaBase += item.quantidade;
+      } else if (item.cargoConfianca) {
+        composicao.excluidosCargoConfianca += item.quantidade;
       } else if (item.overrideExcluido) {
         composicao.excluidosManualmente += item.quantidade;
       } else {

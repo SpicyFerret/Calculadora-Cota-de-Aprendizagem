@@ -59,7 +59,7 @@ export class AjudaService {
       id: 'vinculo',
       titulo: 'Vínculo',
       descricao:
-        'Tipo de contrato da linha: CLT e PCD entram na base de cálculo; estagiários ficam de fora; aprendizes servem para aferir o cumprimento da cota.',
+        'Tipo de contrato da linha: CLT entra na base de cálculo; estagiários ficam de fora; aprendizes servem para aferir o cumprimento da cota.',
       alvo: '[data-ajuda="campo-tipo"]',
       preRequisitos: [ABA_FORMULARIO],
     },
@@ -69,6 +69,14 @@ export class AjudaService {
       descricao:
         'Número de funcionários daquele CBO com aquele vínculo. Use "Adicionar linha" para incluir outras ocupações.',
       alvo: '[data-ajuda="campo-qtd"]',
+      preRequisitos: [ABA_FORMULARIO],
+    },
+    {
+      id: 'cargo-confianca',
+      titulo: 'Cargo de confiança',
+      descricao:
+        'Quantas das pessoas desta linha são cargo de direção ou confiança — essa parcela fica fora da base de cálculo. Ex.: 5 no CBO e 1 de confiança conta 4 na base e exclui só 1, sem precisar de outra linha.',
+      alvo: '[data-ajuda="campo-confianca"]',
       preRequisitos: [ABA_FORMULARIO],
     },
     {
@@ -136,7 +144,7 @@ export class AjudaService {
       id: 'detalhe',
       titulo: 'Tabela detalhada por CBO',
       descricao:
-        'Mostra se cada CBO entra na base e o motivo; permite excluir cargos de direção ou confiança.',
+        'Mostra se cada CBO entra na base e o motivo; permite excluir cargos de direção ou confiança, ou incluir manualmente um CBO que a base oficial não considera.',
       alvo: '[data-ajuda="detalhe"]',
       preRequisitos: [
         {
@@ -150,7 +158,7 @@ export class AjudaService {
       id: 'conferir-cbo',
       titulo: 'Conferência do CBO',
       descricao:
-        'A classificação de cada CBO — se ele entra na cota ou não — vem direto da ficha oficial do MTE (Livros 1 e 2 da Classificação Brasileira de Ocupações), não de uma estimativa. O ícone ao lado de cada linha abre o PDF oficial já na página da família daquele código, para você conferir a fonte.',
+        'A classificação de cada CBO — se ele entra na cota ou não — vem direto da ficha oficial do MTE (consulta ao vivo em cbo.mte.gov.br), não de uma estimativa. O ícone ao lado de cada linha abre a busca oficial por código; o site não permite linkar direto numa família, então basta digitar o código mostrado na dica.',
       alvo: '[data-ajuda="conferir-cbo"]',
       preRequisitos: [
         {

@@ -20,6 +20,8 @@ interface LinhaFormulario {
   cbo: string;
   tipo: TipoVinculo;
   quantidade: number;
+  /** Quantas da quantidade são cargo de direção ou confiança (0 por padrão). */
+  confianca: number;
 }
 
 interface GrupoFormulario {
@@ -61,7 +63,7 @@ export class Entrada {
   readonly lendoArquivo = signal(false);
 
   private novaLinha(): LinhaFormulario {
-    return { cbo: '', tipo: 'CLT', quantidade: 1 };
+    return { cbo: '', tipo: 'CLT', quantidade: 1, confianca: 0 };
   }
 
   private novoGrupo(): GrupoFormulario {
@@ -118,12 +120,23 @@ export class Entrada {
       const linhas = grupo.linhas.filter((l) => l.cbo.trim() !== '');
       preenchidas += linhas.length;
       invalidas += linhas.filter(
-        (l) => !this.cbo.existe(l.cbo) || !Number.isInteger(l.quantidade) || l.quantidade < 1,
+        (l) =>
+          !this.cbo.existe(l.cbo) ||
+          !Number.isInteger(l.quantidade) ||
+          l.quantidade < 1 ||
+          !Number.isInteger(l.confianca) ||
+          l.confianca < 0 ||
+          l.confianca > l.quantidade,
       ).length;
       if (linhas.length > 0) {
         grupos.push({
           cnpj: grupo.cnpj.trim(),
-          linhas: linhas.map((l) => ({ cbo: l.cbo, tipo: l.tipo, quantidade: l.quantidade })),
+          linhas: linhas.map((l) => ({
+            cbo: l.cbo,
+            tipo: l.tipo,
+            quantidade: l.quantidade,
+            quantidadeConfianca: l.confianca,
+          })),
         });
       }
     }
@@ -203,7 +216,12 @@ export class Entrada {
     this.grupos.set(
       grupos.map((g) => ({
         cnpj: g.cnpj,
-        linhas: g.linhas.map((l) => ({ ...l })),
+        linhas: g.linhas.map((l) => ({
+          cbo: l.cbo,
+          tipo: l.tipo,
+          quantidade: l.quantidade,
+          confianca: l.quantidadeConfianca ?? 0,
+        })),
       })),
     );
   }
