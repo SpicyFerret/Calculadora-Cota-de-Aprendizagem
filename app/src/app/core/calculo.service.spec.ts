@@ -69,10 +69,9 @@ describe('CalculoService', () => {
     expect(motivos.every((m) => m.includes('não demanda formação profissional'))).toBe(true);
   });
 
-  it('PCD conta na base; estagiário e aprendiz não contam', async () => {
+  it('CLT conta na base; estagiário e aprendiz não contam', async () => {
     const r = await calcular([
-      { cbo: '411010', tipo: 'CLT', quantidade: 10 },
-      { cbo: '411010', tipo: 'PCD', quantidade: 2 },
+      { cbo: '411010', tipo: 'CLT', quantidade: 12 },
       { cbo: '411010', tipo: 'ESTAGIARIO', quantidade: 5 },
       { cbo: '411010', tipo: 'APRENDIZ', quantidade: 1 },
     ]);

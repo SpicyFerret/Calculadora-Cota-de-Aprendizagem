@@ -33,7 +33,6 @@ describe('ImportService', () => {
       planilha([
         ['CBO', 'TIPO', 'QUANTIDADE'],
         ['411010', 'CLT', 12],
-        ['4110-10', 'PCD', 1],
         ['514320', 'Estagiário', 2],
         ['212405', 'Aprendiz', 1],
       ]),
@@ -44,9 +43,21 @@ describe('ImportService', () => {
     expect(r.grupos[0].cnpj).toBe('');
     expect(r.grupos[0].linhas).toEqual([
       { cbo: '411010', tipo: 'CLT', quantidade: 12, quantidadeConfianca: 0 },
-      { cbo: '411010', tipo: 'PCD', quantidade: 1, quantidadeConfianca: 0 },
       { cbo: '514320', tipo: 'ESTAGIARIO', quantidade: 2, quantidadeConfianca: 0 },
       { cbo: '212405', tipo: 'APRENDIZ', quantidade: 1, quantidadeConfianca: 0 },
+    ]);
+  });
+
+  it('PCD não existe mais como vínculo — é reconhecido como sinônimo de CLT (compatibilidade)', async () => {
+    const r = await servico.importarPlanilha(
+      planilha([
+        ['CBO', 'TIPO', 'QUANTIDADE'],
+        ['4110-10', 'PCD', 1],
+      ]),
+    );
+    expect(r.erros).toEqual([]);
+    expect(r.grupos[0].linhas).toEqual([
+      { cbo: '411010', tipo: 'CLT', quantidade: 1, quantidadeConfianca: 0 },
     ]);
   });
 
