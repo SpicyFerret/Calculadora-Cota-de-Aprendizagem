@@ -166,23 +166,26 @@
             <ng-container matColumnDef="acoes">
               <th mat-header-cell *matHeaderCellDef>Ações</th>
               <td mat-cell *matCellDef="let item" class="acoes">
-                @if (item.podeExcluirManualmente) {
+                @if (item.podeExcluirManualmente || item.podeIncluirManualmente) {
                   <mat-slide-toggle
-                    [checked]="item.overrideExcluido"
-                    (change)="estado.alternarExclusaoManual(item.codigo)"
-                    matTooltip="Excluir da base como cargo de direção ou confiança"
-                  >
-                    Excluir
-                  </mat-slide-toggle>
-                }
-                @if (item.podeIncluirManualmente) {
-                  <mat-slide-toggle
-                    [checked]="item.overrideIncluido"
-                    (change)="estado.alternarInclusaoManual(item.codigo)"
-                    matTooltip="Incluir manualmente na base, mesmo a CBO não exigindo formação profissional"
-                  >
-                    Incluir
-                  </mat-slide-toggle>
+                    [checked]="item.entraNaBase"
+                    (change)="
+                      item.podeExcluirManualmente
+                        ? estado.alternarExclusaoManual(item.codigo)
+                        : estado.alternarInclusaoManual(item.codigo)
+                    "
+                    [matTooltip]="
+                      item.podeExcluirManualmente
+                        ? 'Excluir manualmente (CBO exige formação profissional)'
+                        : 'Incluir manualmente (CBO não exige formação profissional)'
+                    "
+                    [aria-label]="
+                      (item.podeExcluirManualmente
+                        ? 'Excluir manualmente (CBO exige formação profissional)'
+                        : 'Incluir manualmente (CBO não exige formação profissional)') +
+                      ' — CBO ' + item.codigo
+                    "
+                  ></mat-slide-toggle>
                 }
                 <a
                   matIconButton
