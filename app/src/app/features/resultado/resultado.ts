@@ -24,6 +24,8 @@ import { CboService } from '../../core/cbo.service';
 import { EstadoService } from '../../core/estado.service';
 import { ExportService } from '../../core/export.service';
 import { ThemeService } from '../../core/theme.service';
+import { barrasCota, fatiasComposicao } from '../../core/graficos';
+import { avaliarSituacao } from '../../core/situacao';
 import { ItemResultado, ResultadoCalculo, TIPOS } from '../../core/modelos';
 
 Chart.register(
@@ -87,13 +89,7 @@ export class Resultado {
   }
 
   situacaoDe(r: ResultadoCalculo): string {
-    if (r.excedente > 0) {
-      return `${r.excedente} acima da máxima`;
-    }
-    if (!r.obrigada) {
-      return 'Isenta (base < 7)';
-    }
-    return r.deficit > 0 ? `Déficit de ${r.deficit}` : 'Cota cumprida';
+    return avaliarSituacao(r).rotulo;
   }
 
   /**
@@ -114,19 +110,7 @@ export class Resultado {
   }
 
   private desenharComposicao(tela: HTMLCanvasElement, resultado: ResultadoCalculo): void {
-    const c = resultado.composicao;
-    // A ordem das fatias é parte da paleta: foi validada (separação CVD e visão
-    // normal entre vizinhas) nos dois temas. Não reordenar sem revalidar.
-    const fatias = [
-      { rotulo: 'Entram na base', valor: c.entramNaBase, cor: this.corVar('--viz-incluidos') },
-      { rotulo: 'Excluídos pelo CBO', valor: c.excluidosPeloCbo, cor: this.corVar('--viz-excluidos-cbo') },
-      { rotulo: 'Afastados pelo INSS', valor: c.afastadosInss, cor: this.corVar('--viz-afastados-inss') },
-      { rotulo: 'Aprendizes atuais', valor: c.aprendizes, cor: this.corVar('--viz-aprendizes') },
-      { rotulo: 'Estagiários', valor: c.estagiarios, cor: this.corVar('--viz-estagiarios') },
-      { rotulo: 'Excluídos manualmente', valor: c.excluidosManualmente, cor: this.corVar('--viz-excluidos-manual') },
-      { rotulo: 'Terceirizados', valor: c.terceirizados, cor: this.corVar('--viz-terceirizados') },
-      { rotulo: 'Trabalho temporário', valor: c.temporarios, cor: this.corVar('--viz-temporarios') },
-    ].filter((f) => f.valor > 0);
+    const fatias = fatiasComposicao(resultado).map((f) => ({ ...f, cor: this.corVar(f.corVar) }));
 
     const superficie = this.resolverCor('var(--mat-sys-surface)', '#ffffff');
     const ink = this.resolverCor('var(--mat-sys-on-surface-variant)', '#52514e');
@@ -187,12 +171,9 @@ export class Resultado {
     const ink = this.resolverCor('var(--mat-sys-on-surface-variant)', '#52514e');
     const inkForte = this.resolverCor('var(--mat-sys-on-surface)', '#0b0b0b');
     const grade = this.corVar('--viz-grade');
-    const valores = [resultado.minimo, resultado.maximo, resultado.aprendizesAtuais];
-    const cores = [
-      this.corVar('--viz-incluidos'),
-      this.corVar('--viz-cota-maxima'),
-      this.corVar('--viz-aprendizes'),
-    ];
+    const barras = barrasCota(resultado);
+    const valores = barras.map((b) => b.valor);
+    const cores = barras.map((b) => this.corVar(b.corVar));
 
     // Rótulo direto com o valor acima de cada barra.
     const rotulos: Plugin<'bar'> = {
@@ -214,7 +195,7 @@ export class Resultado {
     const config: ChartConfiguration<'bar', number[], string> = {
       type: 'bar',
       data: {
-        labels: ['Cota mínima (5%)', 'Cota máxima (15%)', 'Aprendizes atuais'],
+        labels: barras.map((b) => b.rotulo),
         datasets: [
           {
             data: valores,
