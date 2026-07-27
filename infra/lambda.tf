@@ -35,13 +35,16 @@ resource "aws_lambda_function" "atualiza_cbo" {
 
   runtime = "python3.12"
   handler = "scraper.handler"
-  # Trabalho é de rede (consulta ao vivo às ~624 famílias em cbo.mte.gov.br,
-  # 6 sessões em paralelo), não de CPU como era com o parsing de PDF — medido
-  # localmente em ~1min no total. memory_size baixo é suficiente (só precisa
-  # de folga pro pool de threads); timeout generoso cobre variação de rede e
-  # os retries por família até o site antigo do MTE.
-  timeout       = 180
-  memory_size   = 256
+  # Testado com 256MB: rodou os ~624 lookups em cbo.mte.gov.br (6 sessões em
+  # paralelo) sem estourar memória (~143MB usados) mas estourou os 180s de
+  # timeout mesmo assim — na Lambda a CPU escala com a memória, e o TLS de 6
+  # handshakes simultâneos (mais o overhead do SECLEVEL=1 legado) é sensível a
+  # isso, mesmo sendo um trabalho "de rede". 1024MB dá a mesma CPU que era
+  # usada na época do parsing de PDF; timeout generoso cobre a variação real
+  # observada em produção, bem acima do ~1min medido localmente (que tinha CPU
+  # de notebook inteira à disposição).
+  timeout       = 300
+  memory_size   = 1024
   architectures = ["arm64"]
 
   environment {

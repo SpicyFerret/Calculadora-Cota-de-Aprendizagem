@@ -39,7 +39,7 @@ import time
 import unicodedata
 import urllib.error
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -200,16 +200,30 @@ def classificar_familias(familias: list[str], paralelismo: int = PARALELISMO) ->
     fica em 6 por civilidade com um site antigo e de uso público). Uma falha
     isolada (rede) cai no fallback por Grande Grupo, com aviso; layout mudado
     ou queda total do site abortam (guarda de sanidade), pra não gravar uma
-    base ruim."""
+    base ruim.
+
+    Loga progresso periodicamente — sem isso, um timeout na Lambda não deixa
+    nenhuma pista de até onde chegou (só aparece no fim, no print do handler).
+    """
     resultado: dict[str, bool] = {}
     com_falha = []
+    total = len(familias)
+    inicio = time.time()
+    print(f"Consultando {total} famílias em cbo.mte.gov.br (paralelismo={paralelismo})...", flush=True)
 
     with ThreadPoolExecutor(max_workers=paralelismo) as executor:
-        for familia, exige, erro in executor.map(_classificar_uma, familias):
+        futuros = {executor.submit(_classificar_uma, familia): familia for familia in familias}
+        for concluidas, futuro in enumerate(as_completed(futuros), start=1):
+            familia, exige, erro = futuro.result()
             resultado[familia] = exige
             if erro is not None:
                 com_falha.append(familia)
-                print(f"Aviso: falha ao consultar família {familia} ({erro}); usando fallback por Grande Grupo.")
+                print(
+                    f"Aviso: falha ao consultar família {familia} ({erro}); usando fallback por Grande Grupo.",
+                    flush=True,
+                )
+            if concluidas % 50 == 0 or concluidas == total:
+                print(f"{concluidas}/{total} famílias em {time.time() - inicio:.0f}s", flush=True)
 
     if len(resultado) < MIN_FAMILIAS:
         raise ValueError(
@@ -294,8 +308,10 @@ def _token_do_ssm() -> str:
 
 
 def _gerar_ocupacoes() -> list[dict]:
+    print("Baixando CSV de ocupações...", flush=True)
     ocupacoes = baixar_ocupacoes()
     familias = sorted({o["codigo"][:4] for o in ocupacoes})
+    print(f"{len(ocupacoes)} ocupações, {len(familias)} famílias.", flush=True)
     exige_por_familia = classificar_familias(familias)
     return aplicar_classificacao(ocupacoes, exige_por_familia)
 
