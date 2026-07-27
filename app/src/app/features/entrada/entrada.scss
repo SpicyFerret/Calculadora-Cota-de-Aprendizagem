@@ -47,14 +47,12 @@
   .campo-cbo {
     flex: 3 1 260px;
   }
+  // Largura acomoda o rótulo mais longo do seletor ("Trabalho temporário").
   .campo-tipo {
-    flex: 1 1 140px;
+    flex: 1 1 190px;
   }
   .campo-qtd {
     flex: 0 1 90px;
-  }
-  .campo-confianca {
-    flex: 0 1 130px;
   }
   .remover {
     margin-top: 4px;

@@ -30,13 +30,17 @@ html {
   --ajuda-largura: 340px;
 
   // Paleta dos gráficos — validada (CVD, croma, contraste) para cada superfície;
-  // o 1º passo ancora no verde-água da marca.
+  // o 1º passo ancora no verde-água da marca. A ordem em que a rosca desenha as
+  // fatias faz parte da validação (ver resultado.ts): vizinhas foram medidas aos
+  // pares, então trocar cor ou ordem exige revalidar.
   --viz-incluidos: #00958b;
   --viz-excluidos-cbo: #eb6834;
+  --viz-afastados-inss: #1baf7a;
   --viz-aprendizes: #4a3aa7;
   --viz-estagiarios: #eda100;
   --viz-excluidos-manual: #e87ba4;
-  --viz-excluidos-confianca: #3d6fd1;
+  --viz-terceirizados: #3d6fd1;
+  --viz-temporarios: #e34948;
   --viz-cota-maxima: #5cb8b0; // passo mais claro do verde-água (ordinal, mesma grandeza)
   --viz-grade: #e1e0d9;
 
@@ -51,10 +55,12 @@ html.tema-escuro {
 
   --viz-incluidos: #00a99d; // verde-água exato da marca
   --viz-excluidos-cbo: #d95926;
+  --viz-afastados-inss: #199e70;
   --viz-aprendizes: #9085e9;
   --viz-estagiarios: #c98500;
   --viz-excluidos-manual: #d55181;
-  --viz-excluidos-confianca: #5f85e0;
+  --viz-terceirizados: #5f85e0;
+  --viz-temporarios: #e66767;
   --viz-cota-maxima: #0c6b64;
   --viz-grade: #2c2c2a;
 }

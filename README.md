@@ -23,8 +23,9 @@ EventBridge (cron 03:00 UTC = meia-noite BRT)
   (coluna `CNPJ` opcional). O resultado avisa déficit, isenção (base < 7) e **extrapolação da
   cota máxima de 15%**.
 - **Classificação**: entra na base quem está nos Grandes Grupos 4–9 da CBO; ficam fora GG 0
-  (militares), 1 (direção/gerência), 2 (nível superior) e 3 (técnicos), além de aprendizes,
-  estagiários e exclusões manuais (cargos de confiança). Consulta ao site do MTE não é feita em
+  (militares), 1 (direção/gerência), 2 (nível superior) e 3 (técnicos), além dos vínculos que
+  não são emprego CLT no estabelecimento — aprendizes, estagiários, afastados pelo INSS,
+  terceirizados e trabalho temporário — e das exclusões manuais. Consulta ao site do MTE não é feita em
   tempo real: o site não envia CORS, não tem HTTPS válido e o download oficial exige captcha —
   por isso a base é atualizada diariamente pelo scraper a partir da URL direta do gov.br.
 - **Scraper** (`scraper/`): Python 3.12, só stdlib. Rode local com
