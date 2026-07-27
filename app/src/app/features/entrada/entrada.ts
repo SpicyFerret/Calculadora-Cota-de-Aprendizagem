@@ -20,8 +20,6 @@ interface LinhaFormulario {
   cbo: string;
   tipo: TipoVinculo;
   quantidade: number;
-  /** Quantas da quantidade são cargo de direção ou confiança (0 por padrão). */
-  confianca: number;
 }
 
 interface GrupoFormulario {
@@ -55,6 +53,8 @@ export class Entrada {
   private aviso = inject(MatSnackBar);
 
   readonly tipos = TIPOS;
+  /** Lista usada na dica da aba de importação — sempre em dia com TIPOS. */
+  readonly rotulosTipos = TIPOS.map((t) => t.rotulo).join(', ');
   readonly grupos = signal<GrupoFormulario[]>([this.novoGrupo()]);
   readonly opcoes = signal<Ocupacao[]>([]);
   readonly abaAtiva = signal(0);
@@ -63,7 +63,7 @@ export class Entrada {
   readonly lendoArquivo = signal(false);
 
   private novaLinha(): LinhaFormulario {
-    return { cbo: '', tipo: 'CLT', quantidade: 1, confianca: 0 };
+    return { cbo: '', tipo: 'CLT', quantidade: 1 };
   }
 
   private novoGrupo(): GrupoFormulario {
@@ -120,23 +120,12 @@ export class Entrada {
       const linhas = grupo.linhas.filter((l) => l.cbo.trim() !== '');
       preenchidas += linhas.length;
       invalidas += linhas.filter(
-        (l) =>
-          !this.cbo.existe(l.cbo) ||
-          !Number.isInteger(l.quantidade) ||
-          l.quantidade < 1 ||
-          !Number.isInteger(l.confianca) ||
-          l.confianca < 0 ||
-          l.confianca > l.quantidade,
+        (l) => !this.cbo.existe(l.cbo) || !Number.isInteger(l.quantidade) || l.quantidade < 1,
       ).length;
       if (linhas.length > 0) {
         grupos.push({
           cnpj: grupo.cnpj.trim(),
-          linhas: linhas.map((l) => ({
-            cbo: l.cbo,
-            tipo: l.tipo,
-            quantidade: l.quantidade,
-            quantidadeConfianca: l.confianca,
-          })),
+          linhas: linhas.map((l) => ({ cbo: l.cbo, tipo: l.tipo, quantidade: l.quantidade })),
         });
       }
     }
@@ -216,12 +205,7 @@ export class Entrada {
     this.grupos.set(
       grupos.map((g) => ({
         cnpj: g.cnpj,
-        linhas: g.linhas.map((l) => ({
-          cbo: l.cbo,
-          tipo: l.tipo,
-          quantidade: l.quantidade,
-          confianca: l.quantidadeConfianca ?? 0,
-        })),
+        linhas: g.linhas.map((l) => ({ cbo: l.cbo, tipo: l.tipo, quantidade: l.quantidade })),
       })),
     );
   }

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { CboService } from './cbo.service';
-import { GrupoEstabelecimento, TipoVinculo } from './modelos';
+import { GrupoEstabelecimento, TIPOS, TipoVinculo } from './modelos';
 
 export interface ResultadoImportacao {
   /** Linhas válidas agrupadas por estabelecimento (coluna CNPJ opcional). */
@@ -20,9 +20,25 @@ const TIPOS_RECONHECIDOS: Record<string, TipoVinculo> = {
   estagio: 'ESTAGIARIO',
   aprendiz: 'APRENDIZ',
   'jovem aprendiz': 'APRENDIZ',
+  afastado: 'AFASTADO_INSS',
+  afastada: 'AFASTADO_INSS',
+  'afastado inss': 'AFASTADO_INSS',
+  'afastado pelo inss': 'AFASTADO_INSS',
+  'afastados pelo inss': 'AFASTADO_INSS',
+  inss: 'AFASTADO_INSS',
+  'auxilio doenca': 'AFASTADO_INSS',
+  terceirizado: 'TERCEIRIZADO',
+  terceirizada: 'TERCEIRIZADO',
+  terceiro: 'TERCEIRIZADO',
+  'trabalhador terceirizado': 'TERCEIRIZADO',
+  temporario: 'TEMPORARIO',
+  temporaria: 'TEMPORARIO',
+  'trabalho temporario': 'TEMPORARIO',
+  'trabalhador temporario': 'TEMPORARIO',
 };
 
-const VALORES_AFIRMATIVOS = new Set(['sim', 's', 'true', '1', 'x', 'yes']);
+/** "use CLT, Estagiário, …" — sempre em dia com TIPOS. */
+const ROTULOS_ACEITOS = TIPOS.map((t) => t.rotulo).join(', ');
 
 @Injectable({ providedIn: 'root' })
 export class ImportService {
@@ -32,10 +48,8 @@ export class ImportService {
    * Lê CSV ou XLSX. Dois formatos, detectados pelo cabeçalho:
    *  - agregado: CBO; TIPO; QUANTIDADE
    *  - lista:    [NOME;] CBO; TIPO   (cada linha = 1 pessoa)
-   * Colunas opcionais: CNPJ (separa os estabelecimentos) e CARGO_CONFIANCA —
-   * no formato agregado é um número (quantas da QUANTIDADE são cargo de
-   * direção ou confiança, 0 por padrão); no formato lista é SIM/NAO (a pessoa
-   * da linha é cargo de confiança). Em ambos, essa parcela fica fora da base.
+   * Coluna opcional: CNPJ (separa os estabelecimentos). Colunas desconhecidas
+   * são ignoradas — planilhas antigas com CARGO_CONFIANCA continuam válidas.
    */
   async lerArquivo(arquivo: File): Promise<ResultadoImportacao> {
     const buffer = await arquivo.arrayBuffer();
@@ -66,9 +80,6 @@ export class ImportService {
     const colTipo = cabecalho.findIndex((c) => c === 'tipo' || c === 'vinculo');
     const colQuantidade = cabecalho.findIndex((c) => c === 'quantidade' || c === 'qtd' || c === 'qtde');
     const colCnpj = cabecalho.findIndex((c) => c === 'cnpj' || c === 'estabelecimento' || c === 'filial');
-    const colCargoConfianca = cabecalho.findIndex(
-      (c) => c === 'cargo_confianca' || c === 'cargo confianca' || c === 'confianca' || c === 'direcao',
-    );
     if (colCbo < 0 || colTipo < 0) {
       return {
         grupos: [],
@@ -100,7 +111,7 @@ export class ImportService {
       }
       if (!tipo) {
         erros.push(
-          `Linha ${numeroLinha}: tipo "${valores[colTipo]}" não reconhecido (use CLT, Estagiário ou Aprendiz).`,
+          `Linha ${numeroLinha}: tipo "${valores[colTipo]}" não reconhecido (use ${ROTULOS_ACEITOS}).`,
         );
         return;
       }
@@ -109,30 +120,8 @@ export class ImportService {
         return;
       }
 
-      let quantidadeConfianca = 0;
-      if (colCargoConfianca >= 0) {
-        const valorCru = valores[colCargoConfianca] ?? '';
-        if (formato === 'agregado') {
-          const texto = valorCru.trim();
-          const numero = texto === '' ? 0 : Number(texto.replace(',', '.'));
-          if (!Number.isFinite(numero) || numero < 0 || !Number.isInteger(numero)) {
-            erros.push(`Linha ${numeroLinha}: cargo de confiança "${valorCru}" inválido (use um número).`);
-            return;
-          }
-          if (numero > quantidade) {
-            erros.push(
-              `Linha ${numeroLinha}: cargo de confiança (${numero}) maior que a quantidade (${quantidade}).`,
-            );
-            return;
-          }
-          quantidadeConfianca = numero;
-        } else {
-          quantidadeConfianca = VALORES_AFIRMATIVOS.has(this.normalizarTexto(valorCru)) ? 1 : 0;
-        }
-      }
-
       const grupo = grupos.get(cnpj) ?? { cnpj, linhas: [] };
-      grupo.linhas.push({ cbo: codigo, tipo, quantidade, quantidadeConfianca });
+      grupo.linhas.push({ cbo: codigo, tipo, quantidade });
       grupos.set(cnpj, grupo);
     });
 

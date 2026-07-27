@@ -59,7 +59,7 @@ export class AjudaService {
       id: 'vinculo',
       titulo: 'Vínculo',
       descricao:
-        'Tipo de contrato da linha: CLT entra na base de cálculo; estagiários ficam de fora; aprendizes servem para aferir o cumprimento da cota.',
+        'Tipo de contrato da linha: só CLT entra na base de cálculo. Estagiários, afastados pelo INSS, terceirizados e trabalhadores temporários ficam de fora; aprendizes também ficam de fora da base e servem para aferir o cumprimento da cota.',
       alvo: '[data-ajuda="campo-tipo"]',
       preRequisitos: [ABA_FORMULARIO],
     },
@@ -69,14 +69,6 @@ export class AjudaService {
       descricao:
         'Número de funcionários daquele CBO com aquele vínculo. Use "Adicionar linha" para incluir outras ocupações.',
       alvo: '[data-ajuda="campo-qtd"]',
-      preRequisitos: [ABA_FORMULARIO],
-    },
-    {
-      id: 'cargo-confianca',
-      titulo: 'Cargo de confiança',
-      descricao:
-        'Quantas das pessoas desta linha são cargo de direção ou confiança — essa parcela fica fora da base de cálculo. Ex.: 5 no CBO e 1 de confiança conta 4 na base e exclui só 1, sem precisar de outra linha.',
-      alvo: '[data-ajuda="campo-confianca"]',
       preRequisitos: [ABA_FORMULARIO],
     },
     {
@@ -144,7 +136,7 @@ export class AjudaService {
       id: 'detalhe',
       titulo: 'Tabela detalhada por CBO',
       descricao:
-        'Mostra se cada CBO entra na base e o motivo; permite excluir cargos de direção ou confiança, ou incluir manualmente um CBO que a base oficial não considera.',
+        'Mostra se cada CBO entra na base e o motivo; permite tirar manualmente um CBO da base ou incluir um que a base oficial não considera.',
       alvo: '[data-ajuda="detalhe"]',
       preRequisitos: [
         {

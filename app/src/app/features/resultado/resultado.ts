@@ -115,17 +115,17 @@ export class Resultado {
 
   private desenharComposicao(tela: HTMLCanvasElement, resultado: ResultadoCalculo): void {
     const c = resultado.composicao;
+    // A ordem das fatias é parte da paleta: foi validada (separação CVD e visão
+    // normal entre vizinhas) nos dois temas. Não reordenar sem revalidar.
     const fatias = [
       { rotulo: 'Entram na base', valor: c.entramNaBase, cor: this.corVar('--viz-incluidos') },
       { rotulo: 'Excluídos pelo CBO', valor: c.excluidosPeloCbo, cor: this.corVar('--viz-excluidos-cbo') },
+      { rotulo: 'Afastados pelo INSS', valor: c.afastadosInss, cor: this.corVar('--viz-afastados-inss') },
       { rotulo: 'Aprendizes atuais', valor: c.aprendizes, cor: this.corVar('--viz-aprendizes') },
       { rotulo: 'Estagiários', valor: c.estagiarios, cor: this.corVar('--viz-estagiarios') },
       { rotulo: 'Excluídos manualmente', valor: c.excluidosManualmente, cor: this.corVar('--viz-excluidos-manual') },
-      {
-        rotulo: 'Cargo de confiança (entrada)',
-        valor: c.excluidosCargoConfianca,
-        cor: this.corVar('--viz-excluidos-confianca'),
-      },
+      { rotulo: 'Terceirizados', valor: c.terceirizados, cor: this.corVar('--viz-terceirizados') },
+      { rotulo: 'Trabalho temporário', valor: c.temporarios, cor: this.corVar('--viz-temporarios') },
     ].filter((f) => f.valor > 0);
 
     const superficie = this.resolverCor('var(--mat-sys-surface)', '#ffffff');

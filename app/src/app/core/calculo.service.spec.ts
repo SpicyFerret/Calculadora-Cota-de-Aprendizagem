@@ -80,6 +80,33 @@ describe('CalculoService', () => {
     expect(r.composicao.estagiarios).toBe(5);
   });
 
+  it('afastado pelo INSS, terceirizado e temporário ficam fora da base, com motivo', async () => {
+    const r = await calcular([
+      { cbo: '411010', tipo: 'CLT', quantidade: 10 },
+      { cbo: '411010', tipo: 'AFASTADO_INSS', quantidade: 2 },
+      { cbo: '514320', tipo: 'TERCEIRIZADO', quantidade: 3 },
+      { cbo: '514320', tipo: 'TEMPORARIO', quantidade: 4 },
+    ]);
+    expect(r.base).toBe(10);
+    expect(r.totalPessoas).toBe(19);
+    expect(r.composicao.afastadosInss).toBe(2);
+    expect(r.composicao.terceirizados).toBe(3);
+    expect(r.composicao.temporarios).toBe(4);
+    expect(r.composicao.excluidosPeloCbo).toBe(0);
+    const motivo = (tipo: string) => r.itens.find((i) => i.tipo === tipo)?.motivo ?? '';
+    expect(motivo('AFASTADO_INSS')).toContain('INSS');
+    expect(motivo('TERCEIRIZADO')).toContain('Terceirizado');
+    expect(motivo('TEMPORARIO')).toContain('temporário');
+  });
+
+  it('vínculo fora da base decide mesmo quando o CBO exigiria formação profissional', async () => {
+    const r = await calcular([{ cbo: '411010', tipo: 'TERCEIRIZADO', quantidade: 5 }]);
+    const item = r.itens[0];
+    expect(item.entraNaBase).toBe(false);
+    expect(item.podeExcluirManualmente).toBe(false);
+    expect(item.podeIncluirManualmente).toBe(false);
+  });
+
   it('calcula o déficit em relação à cota mínima', async () => {
     const r = await calcular([
       { cbo: '411010', tipo: 'CLT', quantidade: 100 },
@@ -121,7 +148,7 @@ describe('CalculoService', () => {
     expect(r.deficit).toBe(0);
   });
 
-  it('exclusão manual tira o CBO da base (cargo de confiança)', async () => {
+  it('exclusão manual tira o CBO da base', async () => {
     const r = await calcular(
       [
         { cbo: '411010', tipo: 'CLT', quantidade: 10 },
@@ -152,43 +179,6 @@ describe('CalculoService', () => {
     expect(item.entraNaBase).toBe(false);
     expect(item.podeIncluirManualmente).toBe(true);
     expect(item.overrideIncluido).toBe(false);
-  });
-
-  it('quantidadeConfianca separa e exclui só a parcela marcada de um CBO', async () => {
-    const r = await calcular([{ cbo: '411010', tipo: 'CLT', quantidade: 5, quantidadeConfianca: 1 }]);
-    expect(r.itens.length).toBe(2);
-    expect(r.base).toBe(4);
-    expect(r.composicao.excluidosCargoConfianca).toBe(1);
-    expect(r.composicao.excluidosManualmente).toBe(0);
-    const excluido = r.itens.find((i) => i.cargoConfianca);
-    expect(excluido?.quantidade).toBe(1);
-    expect(excluido?.entraNaBase).toBe(false);
-    expect(excluido?.motivo).toContain('sinalizado na entrada');
-    const normal = r.itens.find((i) => !i.cargoConfianca);
-    expect(normal?.quantidade).toBe(4);
-    expect(normal?.entraNaBase).toBe(true);
-  });
-
-  it('quantidadeConfianca soma entre linhas repetidas do mesmo CBO antes de separar', async () => {
-    const r = await calcular([
-      { cbo: '411010', tipo: 'CLT', quantidade: 3 },
-      { cbo: '411010', tipo: 'CLT', quantidade: 2, quantidadeConfianca: 1 },
-    ]);
-    expect(r.itens.length).toBe(2);
-    expect(r.base).toBe(4); // 3 + (2 - 1)
-    expect(r.composicao.excluidosCargoConfianca).toBe(1);
-  });
-
-  it('exclusão manual (toggle) e cargo de confiança (entrada) ficam em buckets separados', async () => {
-    const r = await calcular(
-      [
-        { cbo: '411010', tipo: 'CLT', quantidade: 5, quantidadeConfianca: 1 },
-        { cbo: '514320', tipo: 'CLT', quantidade: 10 },
-      ],
-      new Map([['514320', false]]),
-    );
-    expect(r.composicao.excluidosCargoConfianca).toBe(1);
-    expect(r.composicao.excluidosManualmente).toBe(10);
   });
 
   it('recalcular reflete mudança nas exclusões manuais', async () => {

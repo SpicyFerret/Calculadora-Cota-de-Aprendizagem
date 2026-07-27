@@ -1,6 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { CboService } from './cbo.service';
-import { GrupoEstabelecimento, ItemResultado, LinhaQuadro, ResultadoCalculo, TipoVinculo } from './modelos';
+import {
+  GrupoEstabelecimento,
+  ItemResultado,
+  LinhaQuadro,
+  ResultadoCalculo,
+  TipoVinculo,
+  VINCULOS_FORA_DA_BASE,
+} from './modelos';
 
 const PERCENTUAL_MINIMO = 5;
 const PERCENTUAL_MAXIMO = 15;
@@ -68,46 +75,28 @@ export class CalculoService {
       cbo: i.codigo,
       tipo: i.tipo,
       quantidade: i.quantidade,
-      quantidadeConfianca: i.cargoConfianca ? i.quantidade : 0,
     }));
     const itens = linhas.map((l) => this.classificarLinha(l, overridesManuais));
     return this.consolidar(itens, resultado.cnpj);
   }
 
-  /**
-   * Separa a parcela de cargo de confiança de cada linha (quantidadeConfianca)
-   * do restante, e soma quantidades repetidas (mesmo CBO + tipo + condição) —
-   * assim a parcela de confiança fica num grupo à parte do resto do mesmo CBO,
-   * e pode ser excluída sozinha (exclusão parcial).
-   */
+  /** Soma as quantidades das linhas repetidas (mesmo CBO + vínculo) numa só. */
   private agregar(linhas: LinhaQuadro[]): LinhaQuadro[] {
-    const mapa = new Map<string, { cbo: string; tipo: TipoVinculo; quantidade: number; confianca: boolean }>();
-    const somar = (codigo: string, tipo: TipoVinculo, quantidade: number, confianca: boolean) => {
-      if (quantidade <= 0) {
-        return;
+    const mapa = new Map<string, { cbo: string; tipo: TipoVinculo; quantidade: number }>();
+    for (const linha of linhas) {
+      if (linha.quantidade <= 0) {
+        continue;
       }
-      const chave = `${codigo}|${tipo}|${confianca}`;
+      const codigo = this.cbo.normalizar(linha.cbo);
+      const chave = `${codigo}|${linha.tipo}`;
       const atual = mapa.get(chave);
       if (atual) {
-        atual.quantidade += quantidade;
+        atual.quantidade += linha.quantidade;
       } else {
-        mapa.set(chave, { cbo: codigo, tipo, quantidade, confianca });
+        mapa.set(chave, { cbo: codigo, tipo: linha.tipo, quantidade: linha.quantidade });
       }
-    };
-    for (const linha of linhas) {
-      const codigo = this.cbo.normalizar(linha.cbo);
-      const confianca = Math.min(Math.max(Math.trunc(linha.quantidadeConfianca ?? 0), 0), linha.quantidade);
-      somar(codigo, linha.tipo, linha.quantidade - confianca, false);
-      somar(codigo, linha.tipo, confianca, true);
     }
-    return [...mapa.values()]
-      .sort((a, b) => a.cbo.localeCompare(b.cbo))
-      .map((g) => ({
-        cbo: g.cbo,
-        tipo: g.tipo,
-        quantidade: g.quantidade,
-        quantidadeConfianca: g.confianca ? g.quantidade : 0,
-      }));
+    return [...mapa.values()].sort((a, b) => a.cbo.localeCompare(b.cbo));
   }
 
   private classificarLinha(
@@ -117,7 +106,6 @@ export class CalculoService {
     const codigo = this.cbo.normalizar(linha.cbo);
     const titulo = this.cbo.titulo(codigo);
     const encontrado = titulo !== null;
-    const cargoConfianca = (linha.quantidadeConfianca ?? 0) > 0;
 
     const comum = {
       codigo,
@@ -125,18 +113,17 @@ export class CalculoService {
       encontrado,
       tipo: linha.tipo,
       quantidade: linha.quantidade,
-      cargoConfianca,
       overrideExcluido: false,
       podeExcluirManualmente: false,
       overrideIncluido: false,
       podeIncluirManualmente: false,
     };
 
-    if (linha.tipo === 'APRENDIZ') {
-      return { ...comum, entraNaBase: false, motivo: 'Aprendiz já contratado (não compõe a base)' };
-    }
-    if (linha.tipo === 'ESTAGIARIO') {
-      return { ...comum, entraNaBase: false, motivo: 'Estagiário não é empregado (Lei 11.788/2008)' };
+    // O vínculo decide antes do CBO: quem não é empregado CLT do estabelecimento
+    // não compõe a base, qualquer que seja a ocupação.
+    const motivoDoVinculo = VINCULOS_FORA_DA_BASE[linha.tipo];
+    if (motivoDoVinculo) {
+      return { ...comum, entraNaBase: false, motivo: motivoDoVinculo };
     }
     if (!encontrado) {
       return { ...comum, entraNaBase: false, motivo: 'CBO não encontrado na base oficial — confira o código' };
@@ -157,21 +144,13 @@ export class CalculoService {
       }
       return { ...comum, entraNaBase: false, podeIncluirManualmente: true, motivo: classificacao.motivo };
     }
-    if (cargoConfianca) {
-      return {
-        ...comum,
-        entraNaBase: false,
-        overrideExcluido: true,
-        motivo: 'Cargo de direção ou confiança (sinalizado na entrada)',
-      };
-    }
     if (override === false) {
       return {
         ...comum,
         entraNaBase: false,
         overrideExcluido: true,
         podeExcluirManualmente: true,
-        motivo: 'Excluído manualmente (cargo de direção ou confiança)',
+        motivo: 'Excluído manualmente da base de cálculo',
       };
     }
     return { ...comum, entraNaBase: true, podeExcluirManualmente: true, motivo: classificacao.motivo };
@@ -186,8 +165,10 @@ export class CalculoService {
       excluidosPeloCbo: 0,
       aprendizes: 0,
       estagiarios: 0,
+      afastadosInss: 0,
+      terceirizados: 0,
+      temporarios: 0,
       excluidosManualmente: 0,
-      excluidosCargoConfianca: 0,
     };
 
     for (const item of itens) {
@@ -197,11 +178,15 @@ export class CalculoService {
         composicao.aprendizes += item.quantidade;
       } else if (item.tipo === 'ESTAGIARIO') {
         composicao.estagiarios += item.quantidade;
+      } else if (item.tipo === 'AFASTADO_INSS') {
+        composicao.afastadosInss += item.quantidade;
+      } else if (item.tipo === 'TERCEIRIZADO') {
+        composicao.terceirizados += item.quantidade;
+      } else if (item.tipo === 'TEMPORARIO') {
+        composicao.temporarios += item.quantidade;
       } else if (item.entraNaBase) {
         base += item.quantidade;
         composicao.entramNaBase += item.quantidade;
-      } else if (item.cargoConfianca) {
-        composicao.excluidosCargoConfianca += item.quantidade;
       } else if (item.overrideExcluido) {
         composicao.excluidosManualmente += item.quantidade;
       } else {
