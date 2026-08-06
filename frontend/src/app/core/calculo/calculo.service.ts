@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { CboService } from './cbo.service';
+import { CboService } from '../cbo/cbo.service';
 import {
   GrupoEstabelecimento,
   ItemResultado,
@@ -7,7 +7,7 @@ import {
   ResultadoCalculo,
   TipoVinculo,
   VINCULOS_FORA_DA_BASE,
-} from './modelos';
+} from '../modelos/modelos';
 
 const PERCENTUAL_MINIMO = 5;
 const PERCENTUAL_MAXIMO = 15;

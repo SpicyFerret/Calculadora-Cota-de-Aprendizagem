@@ -1,4 +1,4 @@
-import { ResultadoCalculo } from './modelos';
+import { ResultadoCalculo } from '../modelos/modelos';
 
 export interface SituacaoCota {
   /** Se o estabelecimento precisa fazer alguma coisa a respeito da cota. */

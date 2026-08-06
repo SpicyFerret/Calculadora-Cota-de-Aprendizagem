@@ -18,3 +18,4 @@ infra/bootstrap/.terraform.lock.hcl
 # Diversos
 .DS_Store
 Thumbs.db
+docs

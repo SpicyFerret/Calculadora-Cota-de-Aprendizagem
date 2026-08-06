@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { BaseCbo, Classificacao, Ocupacao } from './modelos';
+import { BaseCbo, Classificacao, Ocupacao } from '../modelos/modelos';
 
 const MOTIVO_ENTRA =
   'Segundo a ficha oficial do MTE, esta família ocupacional demanda formação profissional para efeitos do cálculo da cota (art. 429 da CLT)';

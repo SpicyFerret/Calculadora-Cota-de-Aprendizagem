@@ -1,4 +1,4 @@
-import { ResultadoCalculo } from './modelos';
+import { ResultadoCalculo } from '../modelos/modelos';
 import { avaliarSituacao } from './situacao';
 
 function resultado(parcial: Partial<ResultadoCalculo>): ResultadoCalculo {

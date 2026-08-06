@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { CalculoService } from './calculo.service';
-import { GrupoEstabelecimento, ResultadoCalculo } from './modelos';
+import { CalculoService } from '../calculo/calculo.service';
+import { GrupoEstabelecimento, ResultadoCalculo } from '../modelos/modelos';
 
 /** Duração mínima da barra de progresso, para o feedback ser perceptível. */
 const DURACAO_MINIMA_MS = 500;

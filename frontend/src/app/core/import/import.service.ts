@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { CboService } from './cbo.service';
-import { GrupoEstabelecimento, TIPOS, TipoVinculo } from './modelos';
+import { CboService } from '../cbo/cbo.service';
+import { GrupoEstabelecimento, TIPOS, TipoVinculo } from '../modelos/modelos';
 
 export interface ResultadoImportacao {
   /** Linhas válidas agrupadas por estabelecimento (coluna CNPJ opcional). */

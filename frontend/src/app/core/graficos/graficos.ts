@@ -1,4 +1,4 @@
-import { ResultadoCalculo } from './modelos';
+import { ResultadoCalculo } from '../modelos/modelos';
 
 /** Uma fatia/barra do gráfico: o valor e a variável CSS que dá a cor. */
 export interface SerieGrafico {

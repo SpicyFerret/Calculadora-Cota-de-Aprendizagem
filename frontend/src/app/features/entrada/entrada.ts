@@ -11,10 +11,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { CboService } from '../../core/cbo.service';
-import { EstadoService } from '../../core/estado.service';
-import { ImportService, ResultadoImportacao } from '../../core/import.service';
-import { GrupoEstabelecimento, Ocupacao, TIPOS, TipoVinculo } from '../../core/modelos';
+import { CboService } from '../../core/cbo/cbo.service';
+import { EstadoService } from '../../core/estado/estado.service';
+import { ImportService, ResultadoImportacao } from '../../core/import/import.service';
+import { GrupoEstabelecimento, Ocupacao, TIPOS, TipoVinculo } from '../../core/modelos/modelos';
 
 interface LinhaFormulario {
   cbo: string;

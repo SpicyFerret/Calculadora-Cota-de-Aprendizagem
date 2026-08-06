@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import * as XLSX from 'xlsx';
-import { CboService } from './cbo.service';
+import { CboService } from '../cbo/cbo.service';
 import { ImportService } from './import.service';
 
 const BASE_TESTE = {

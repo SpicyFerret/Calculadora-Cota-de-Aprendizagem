@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { CalculoService } from './calculo.service';
-import { CboService } from './cbo.service';
-import { LinhaQuadro } from './modelos';
+import { CboService } from '../cbo/cbo.service';
+import { LinhaQuadro } from '../modelos/modelos';
 
 const BASE_TESTE = {
   geradoEm: '2026-07-10',

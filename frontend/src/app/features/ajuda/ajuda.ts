@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { AjudaService, TopicoAjuda } from '../../core/ajuda.service';
+import { AjudaService, TopicoAjuda } from '../../core/ajuda/ajuda.service';
 
 @Component({
   selector: 'app-ajuda',

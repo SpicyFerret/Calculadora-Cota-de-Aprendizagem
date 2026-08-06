@@ -10,13 +10,13 @@ aprendizes a empresa deve contratar (mínimo 5%, máximo 15% da base, frações 
 EventBridge (cron 03:00 UTC = meia-noite BRT)
   └─> Lambda Python (scraper/scraper.py)
         ├─ baixa o CSV oficial da CBO (gov.br/trabalho-e-emprego, URL direta)
-        ├─ gera app/public/data/cbo.json
+        ├─ gera frontend/public/data/cbo.json
         └─ se mudou: commita via API do GitHub
               └─> push dispara o GitHub Actions
                     └─> testes + build Angular + deploy no Cloudflare Pages
 ```
 
-- **App** (`app/`): Angular 22 + Angular Material (tema Cyan & Orange, claro/escuro), 100% estático.
+- **Frontend** (`frontend/`): Angular 22 + Angular Material (tema Cyan & Orange, claro/escuro), 100% estático.
   A base CBO (~2.700 ocupações) fica embutida como asset — sem backend em runtime.
   Suporta **múltiplos estabelecimentos** (matriz/filiais): a cota é apurada por CNPJ, tanto no
   formulário (um retângulo por filial, com campo de CNPJ opcional) quanto na importação
@@ -33,15 +33,15 @@ EventBridge (cron 03:00 UTC = meia-noite BRT)
 - **Infra** (`infra/`): OpenTofu — Lambda + EventBridge + SSM (token do GitHub) + projeto
   Cloudflare Pages. Estado no S3.
 - **CI/CD** (`.github/workflows/`): deploys separados por branch —
-  `deploy-pages.yml` roda em push na **`main`** (testes, build e deploy do app; é o que o commit
-  do bot dispara) e `tofu.yml` roda em push na branch **`infra`** (plan/apply via OIDC, sem
-  chaves de longa duração; PRs mostram só o plan). Assim, o commit noturno do scraper na main
-  nunca mexe na infraestrutura.
+  `deploy-pages.yml` roda em push na **`main`** (testes, build e deploy do frontend; é o que o
+  commit do bot dispara) e `tofu.yml` roda em push na branch **`infra`** (plan/apply via OIDC,
+  sem chaves de longa duração; PRs mostram só o plan). Assim, o commit noturno do scraper na
+  main nunca mexe na infraestrutura.
 
 ## Desenvolvimento local
 
 ```bash
-cd app
+cd frontend
 npm ci
 npm start        # http://localhost:4200
 npm test         # testes unitários (vitest)
@@ -87,9 +87,9 @@ npm run build    # build de produção em dist/cota-aprendiz/browser
    | `DOMINIO_SITE` | (opcional) domínio próprio do site, ex.: `cota.exemplo.com.br` |
 
 4. Crie a branch **`infra`** e faça push nela: o `tofu.yml` cria o bucket de estado (se
-   preciso) e provisiona Lambda/EventBridge/Pages. Push na **`main`** com mudanças em `app/**`
-   dispara o `deploy-pages.yml`, que publica o site em `https://cota-aprendiz.pages.dev`
-   (ou no `DOMINIO_SITE`, se definido).
+   preciso) e provisiona Lambda/EventBridge/Pages. Push na **`main`** com mudanças em
+   `frontend/**` dispara o `deploy-pages.yml`, que publica o site em
+   `https://cota-aprendiz.pages.dev` (ou no `DOMINIO_SITE`, se definido).
 
 Para testar a Lambda sem esperar a meia-noite:
 `aws lambda invoke --function-name cota-aprendiz-atualiza-cbo /dev/stdout`

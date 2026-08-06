@@ -20,13 +20,13 @@ import {
   Plugin,
   Tooltip,
 } from 'chart.js';
-import { CboService } from '../../core/cbo.service';
-import { EstadoService } from '../../core/estado.service';
-import { ExportService } from '../../core/export.service';
-import { ThemeService } from '../../core/theme.service';
-import { barrasCota, fatiasComposicao } from '../../core/graficos';
-import { avaliarSituacao } from '../../core/situacao';
-import { ItemResultado, ResultadoCalculo, TIPOS } from '../../core/modelos';
+import { CboService } from '../../core/cbo/cbo.service';
+import { EstadoService } from '../../core/estado/estado.service';
+import { ExportService } from '../../core/export/export.service';
+import { ThemeService } from '../../core/theme/theme.service';
+import { barrasCota, fatiasComposicao } from '../../core/graficos/graficos';
+import { avaliarSituacao } from '../../core/situacao/situacao';
+import { ItemResultado, ResultadoCalculo, TIPOS } from '../../core/modelos/modelos';
 
 Chart.register(
   ArcElement,
