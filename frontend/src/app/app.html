@@ -4,53 +4,57 @@
   </a>
   <span class="titulo">Calculadora de Cota de Aprendizagem</span>
   <span class="espaco"></span>
-  <button
-    matIconButton
-    data-ajuda="base-cbo"
-    [matMenuTriggerFor]="menuBaseCbo"
-    [attr.aria-label]="'Base CBO: ' + (cbo.customizada() ? 'customizada' : 'padrão do site')"
-    [matBadge]="cbo.customizada() ? '●' : null"
-    matBadgeSize="small"
-    matBadgeColor="accent"
-  >
-    <mat-icon>{{ cbo.customizada() ? 'rule_folder' : 'folder' }}</mat-icon>
-  </button>
-  <mat-menu #menuBaseCbo="matMenu">
-    <div class="info-base-cbo" (click)="$event.stopPropagation()">
-      <span class="rotulo-base">{{ cbo.customizada() ? 'Base customizada' : 'Base padrão do site' }}</span>
-      @if (cbo.carregada()) {
-        <span class="detalhe-base">{{ cbo.totalOcupacoes() }} ocupações · {{ cbo.geradoEm() }}</span>
-      }
-    </div>
-    <button mat-menu-item (click)="baseCbo.baixarJson()">
-      <mat-icon>data_object</mat-icon>
-      Baixar base (JSON)
+  <div class="menu-base-cbo" [class.aberto]="menuBaseCboAberto()">
+    <button
+      matIconButton
+      class="botao-base-cbo"
+      data-ajuda="base-cbo"
+      [class.customizada]="cbo.customizada()"
+      [attr.aria-label]="'Base CBO: ' + (cbo.customizada() ? 'customizada' : 'padrão do site')"
+      [attr.aria-expanded]="menuBaseCboAberto()"
+      (click)="$event.stopPropagation(); menuBaseCboAberto.set(!menuBaseCboAberto())"
+    >
+      <mat-icon>{{ cbo.customizada() ? 'rule_folder' : 'folder' }}</mat-icon>
     </button>
-    <button mat-menu-item (click)="baseCbo.baixarCsv()">
-      <mat-icon>description</mat-icon>
-      Baixar base (CSV)
-    </button>
-    <button mat-menu-item (click)="baseCbo.baixarXlsx()">
-      <mat-icon>table_view</mat-icon>
-      Baixar base (XLSX)
-    </button>
-    <button mat-menu-item [disabled]="importandoBase()" (click)="seletorBaseCbo.click()">
-      <mat-icon>upload_file</mat-icon>
-      Carregar base atualizada…
-    </button>
-    @if (cbo.customizada()) {
-      <button mat-menu-item (click)="restaurarBasePadrao()">
-        <mat-icon>restart_alt</mat-icon>
-        Restaurar base padrão do site
-      </button>
+    @if (menuBaseCboAberto()) {
+      <div class="painel-base-cbo" (click)="$event.stopPropagation()">
+        <div class="info-base-cbo">
+          <span class="rotulo-base">{{ cbo.customizada() ? 'Base customizada' : 'Base padrão do site' }}</span>
+          @if (cbo.carregada()) {
+            <span class="detalhe-base">{{ cbo.totalOcupacoes() }} ocupações · {{ cbo.geradoEm() }}</span>
+          }
+        </div>
+        <button matButton (click)="baseCbo.baixarJson(); menuBaseCboAberto.set(false)">
+          <mat-icon>data_object</mat-icon>
+          Baixar base (JSON)
+        </button>
+        <button matButton (click)="baseCbo.baixarCsv(); menuBaseCboAberto.set(false)">
+          <mat-icon>description</mat-icon>
+          Baixar base (CSV)
+        </button>
+        <button matButton (click)="baseCbo.baixarXlsx(); menuBaseCboAberto.set(false)">
+          <mat-icon>table_view</mat-icon>
+          Baixar base (XLSX)
+        </button>
+        <button matButton [disabled]="importandoBase()" (click)="seletorBaseCbo.click()">
+          <mat-icon>upload_file</mat-icon>
+          Carregar base atualizada…
+        </button>
+        @if (cbo.customizada()) {
+          <button matButton (click)="restaurarBasePadrao(); menuBaseCboAberto.set(false)">
+            <mat-icon>restart_alt</mat-icon>
+            Restaurar base padrão do site
+          </button>
+        }
+      </div>
     }
-  </mat-menu>
+  </div>
   <input
     #seletorBaseCbo
     type="file"
     accept=".json,.csv,.xlsx,.xls"
     hidden
-    (change)="aoEscolherArquivoBase($event)"
+    (change)="aoEscolherArquivoBase($event); menuBaseCboAberto.set(false)"
   />
   <button
     matIconButton

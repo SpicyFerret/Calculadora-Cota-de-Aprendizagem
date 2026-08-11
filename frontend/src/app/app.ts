@@ -1,8 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
-import { MatBadgeModule } from '@angular/material/badge';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { AjudaService } from './core/ajuda/ajuda.service';
@@ -15,17 +13,7 @@ import { Resultado } from './features/resultado/resultado';
 
 @Component({
   selector: 'app-root',
-  imports: [
-    Ajuda,
-    Entrada,
-    Resultado,
-    MatBadgeModule,
-    MatButtonModule,
-    MatIconModule,
-    MatMenuModule,
-    MatSnackBarModule,
-    MatToolbarModule,
-  ],
+  imports: [Ajuda, Entrada, Resultado, MatButtonModule, MatIconModule, MatSnackBarModule, MatToolbarModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   host: { '[class.ajuda-aberta]': 'ajuda.aberta()' },
@@ -38,9 +26,17 @@ export class App {
   private aviso = inject(MatSnackBar);
 
   readonly importandoBase = signal(false);
+  /** Dropdown do menu de base CBO (sem MatMenu/CDK Overlay: mantém o bundle inicial dentro do orçamento). */
+  readonly menuBaseCboAberto = signal(false);
 
   constructor() {
     void this.cbo.carregar();
+  }
+
+  /** Fecha o menu ao clicar fora dele — os cliques internos já param a propagação. */
+  @HostListener('document:click')
+  fecharMenuBaseCbo(): void {
+    this.menuBaseCboAberto.set(false);
   }
 
   async aoEscolherArquivoBase(evento: Event): Promise<void> {
