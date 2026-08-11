@@ -5,6 +5,7 @@ describe('CboService', () => {
   let servico: CboService;
 
   beforeEach(() => {
+    localStorage.clear();
     servico = TestBed.inject(CboService);
     servico.usarBase({
       geradoEm: '2026-07-10',
@@ -51,5 +52,57 @@ describe('CboService', () => {
   it('linka a busca oficial por código e mostra o código da família a digitar', () => {
     expect(servico.linkFicha('410230')).toContain('cbo.mte.gov.br');
     expect(servico.descricaoFicha('4102-30')).toBe('4102');
+  });
+
+  it('baseAtual() devolve a base ativa no formato exportável', () => {
+    const base = servico.baseAtual();
+    expect(base.geradoEm).toBe('2026-07-10');
+    expect(base.ocupacoes.length).toBe(9);
+  });
+
+  describe('importar()', () => {
+    const baseCustomizada = {
+      geradoEm: '2026-08-01',
+      fonte: 'Base importada manualmente pelo usuário',
+      ocupacoes: [{ codigo: '999999', titulo: 'Ocupação de teste', exigeFormacaoProfissional: true }],
+    };
+
+    it('troca a base ativa e marca como customizada', () => {
+      servico.importar(baseCustomizada);
+      expect(servico.customizada()).toBe(true);
+      expect(servico.existe('999999')).toBe(true);
+      expect(servico.existe('411010')).toBe(false);
+    });
+
+    it('persiste a base no localStorage', () => {
+      servico.importar(baseCustomizada);
+      const salvo = localStorage.getItem('cota-aprendiz.base-cbo-customizada');
+      expect(salvo).toBeTruthy();
+      expect(JSON.parse(salvo!)).toEqual(baseCustomizada);
+    });
+
+    it('carregar() usa a base salva em vez de buscar o cbo.json padrão quando existe uma customizada', async () => {
+      localStorage.setItem('cota-aprendiz.base-cbo-customizada', JSON.stringify(baseCustomizada));
+      const novoServico = TestBed.inject(CboService);
+      await novoServico.carregar();
+      expect(novoServico.customizada()).toBe(true);
+      expect(novoServico.existe('999999')).toBe(true);
+    });
+  });
+
+  describe('restaurarPadrao()', () => {
+    it('remove a base salva e marca como não customizada', async () => {
+      servico.importar({
+        geradoEm: '2026-08-01',
+        fonte: 'teste',
+        ocupacoes: [{ codigo: '999999', titulo: 'X', exigeFormacaoProfissional: true }],
+      });
+      expect(servico.customizada()).toBe(true);
+
+      // fetch indisponível no ambiente de teste: só valida que a chave some e o flag muda.
+      await servico.restaurarPadrao().catch(() => undefined);
+      expect(localStorage.getItem('cota-aprendiz.base-cbo-customizada')).toBeNull();
+      expect(servico.customizada()).toBe(false);
+    });
   });
 });

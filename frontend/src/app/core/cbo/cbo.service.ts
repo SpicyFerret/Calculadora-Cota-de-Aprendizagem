@@ -9,6 +9,9 @@ const MOTIVO_NAO_ENTRA =
 /** Mesmo site que o scraper consulta como fonte (ver scraper/scraper.py). */
 const BUSCA_POR_CODIGO_URL = 'https://cbo.mte.gov.br/cbosite/pages/pesquisas/BuscaPorCodigo.jsf';
 
+/** Base customizada (importada pelo usuário) persiste até ele restaurar a padrão. */
+const CHAVE_BASE_CUSTOMIZADA = 'cota-aprendiz.base-cbo-customizada';
+
 @Injectable({ providedIn: 'root' })
 export class CboService {
   private ocupacoesPorCodigo = new Map<string, Ocupacao>();
@@ -19,8 +22,19 @@ export class CboService {
   readonly geradoEm = signal('');
   readonly fonte = signal('');
   readonly totalOcupacoes = signal(0);
+  /** true quando a base ativa veio de um arquivo importado pelo usuário, não do site. */
+  readonly customizada = signal(false);
 
   async carregar(): Promise<void> {
+    const salva = this.lerBaseSalva();
+    if (salva) {
+      this.usarBase(salva, true);
+      return;
+    }
+    await this.carregarPadrao();
+  }
+
+  private async carregarPadrao(): Promise<void> {
     try {
       const resposta = await fetch('data/cbo.json');
       if (!resposta.ok) {
@@ -33,8 +47,39 @@ export class CboService {
     }
   }
 
+  /** Base atual, para os exporters (JSON/CSV/XLSX) da própria base CBO. */
+  baseAtual(): BaseCbo {
+    return { geradoEm: this.geradoEm(), fonte: this.fonte(), ocupacoes: this.ocupacoes };
+  }
+
+  /** Troca a base ativa por um arquivo importado pelo usuário e persiste no navegador. */
+  importar(base: BaseCbo): void {
+    this.usarBase(base, true);
+    try {
+      localStorage.setItem(CHAVE_BASE_CUSTOMIZADA, JSON.stringify(base));
+    } catch {
+      // localStorage indisponível (modo privado, quota) — segue só em memória.
+    }
+  }
+
+  /** Descarta a base importada e volta a carregar o cbo.json padrão do site. */
+  async restaurarPadrao(): Promise<void> {
+    localStorage.removeItem(CHAVE_BASE_CUSTOMIZADA);
+    await this.carregarPadrao();
+    this.customizada.set(false);
+  }
+
+  private lerBaseSalva(): BaseCbo | null {
+    try {
+      const bruto = localStorage.getItem(CHAVE_BASE_CUSTOMIZADA);
+      return bruto ? (JSON.parse(bruto) as BaseCbo) : null;
+    } catch {
+      return null;
+    }
+  }
+
   /** Também usado pelos testes para injetar uma base pequena. */
-  usarBase(base: BaseCbo): void {
+  usarBase(base: BaseCbo, customizada = false): void {
     this.ocupacoes = base.ocupacoes;
     this.ocupacoesPorCodigo = new Map(base.ocupacoes.map((o) => [o.codigo, o]));
     this.geradoEm.set(base.geradoEm);
@@ -42,6 +87,7 @@ export class CboService {
     this.totalOcupacoes.set(base.ocupacoes.length);
     this.erroCarga.set(null);
     this.carregada.set(true);
+    this.customizada.set(customizada);
   }
 
   /** Remove tudo que não é dígito ("4110-10" → "411010"). */

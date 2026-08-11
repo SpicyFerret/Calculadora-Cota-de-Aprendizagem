@@ -186,8 +186,15 @@ export class AjudaService {
       id: 'base',
       titulo: 'Base CBO oficial',
       descricao:
-        'O rodapé mostra quantas ocupações a base tem, quando foi atualizada e a fonte oficial (MTE); ela é atualizada automaticamente.',
+        'O rodapé mostra quantas ocupações a base tem, quando foi atualizada e a fonte oficial (MTE).',
       alvo: '[data-ajuda="rodape"]',
+    },
+    {
+      id: 'base-cbo',
+      titulo: 'Base CBO: baixar ou atualizar',
+      descricao:
+        'Baixe a base atual em JSON, CSV ou XLSX, ou carregue um arquivo próprio para substituí-la — útil se você tem uma versão mais recente que a publicada no site. A base carregada fica salva neste navegador; "Restaurar base padrão" volta à base oficial do site.',
+      alvo: '[data-ajuda="base-cbo"]',
     },
   ];
 
