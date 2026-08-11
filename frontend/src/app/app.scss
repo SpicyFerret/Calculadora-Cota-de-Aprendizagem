@@ -1,0 +1,96 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-right 0.25s ease;
+}
+
+// Painel de ajuda aberto: o app é empurrado para o lado.
+:host(.ajuda-aberta) {
+  margin-right: var(--ajuda-largura);
+}
+
+@media (max-width: 900px) {
+  // Em telas estreitas o painel cobre o app em vez de espremer o conteúdo.
+  :host(.ajuda-aberta) {
+    margin-right: 0;
+  }
+}
+
+.topo {
+  gap: 14px;
+  // Fixo no topo: fica visível ao rolar a página, acima do conteúdo mas
+  // atrás do painel de ajuda (z-index 95) e seu botão lateral (90).
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
+  // Azul-marinho da marca em ambos os temas; a logo usada é a variante
+  // "fonte branca", feita para fundo escuro.
+  background: var(--marca-azul);
+  color: #ffffff;
+
+  .link-logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo {
+    height: 36px;
+    display: block;
+  }
+
+  .titulo {
+    font-size: 1.05rem;
+    // Toolbar do Material não deixa itens flex encolherem abaixo do texto
+    // inteiro por padrão (white-space: nowrap + min-width: auto) — em telas
+    // estreitas isso empurrava os botões para fora e criava rolagem horizontal.
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .espaco {
+    flex: 1;
+  }
+
+  .logo {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .topo .titulo {
+    display: none;
+  }
+}
+
+main {
+  flex: 1;
+  width: min(1080px, 100% - 32px);
+  margin: 24px auto;
+}
+
+footer {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.info-base-cbo {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px;
+  cursor: default;
+
+  .rotulo-base {
+    font-weight: 500;
+  }
+
+  .detalhe-base {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

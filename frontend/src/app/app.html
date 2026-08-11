@@ -1,0 +1,79 @@
+<mat-toolbar class="topo">
+  <a href="https://gerar.org.br/projeto/aprendiz-gerar/" target="_blank" rel="noopener" class="link-logo">
+    <img class="logo" src="marca/logo-fonte-branca.png" alt="Aprendiz Gerar" />
+  </a>
+  <span class="titulo">Calculadora de Cota de Aprendizagem</span>
+  <span class="espaco"></span>
+  <button
+    matIconButton
+    data-ajuda="base-cbo"
+    [matMenuTriggerFor]="menuBaseCbo"
+    [attr.aria-label]="'Base CBO: ' + (cbo.customizada() ? 'customizada' : 'padrão do site')"
+    [matBadge]="cbo.customizada() ? '●' : null"
+    matBadgeSize="small"
+    matBadgeColor="accent"
+  >
+    <mat-icon>{{ cbo.customizada() ? 'rule_folder' : 'folder' }}</mat-icon>
+  </button>
+  <mat-menu #menuBaseCbo="matMenu">
+    <div class="info-base-cbo" (click)="$event.stopPropagation()">
+      <span class="rotulo-base">{{ cbo.customizada() ? 'Base customizada' : 'Base padrão do site' }}</span>
+      @if (cbo.carregada()) {
+        <span class="detalhe-base">{{ cbo.totalOcupacoes() }} ocupações · {{ cbo.geradoEm() }}</span>
+      }
+    </div>
+    <button mat-menu-item (click)="baseCbo.baixarJson()">
+      <mat-icon>data_object</mat-icon>
+      Baixar base (JSON)
+    </button>
+    <button mat-menu-item (click)="baseCbo.baixarCsv()">
+      <mat-icon>description</mat-icon>
+      Baixar base (CSV)
+    </button>
+    <button mat-menu-item (click)="baseCbo.baixarXlsx()">
+      <mat-icon>table_view</mat-icon>
+      Baixar base (XLSX)
+    </button>
+    <button mat-menu-item [disabled]="importandoBase()" (click)="seletorBaseCbo.click()">
+      <mat-icon>upload_file</mat-icon>
+      Carregar base atualizada…
+    </button>
+    @if (cbo.customizada()) {
+      <button mat-menu-item (click)="restaurarBasePadrao()">
+        <mat-icon>restart_alt</mat-icon>
+        Restaurar base padrão do site
+      </button>
+    }
+  </mat-menu>
+  <input
+    #seletorBaseCbo
+    type="file"
+    accept=".json,.csv,.xlsx,.xls"
+    hidden
+    (change)="aoEscolherArquivoBase($event)"
+  />
+  <button
+    matIconButton
+    data-ajuda="tema"
+    (click)="tema.alternar()"
+    [attr.aria-label]="tema.escuro() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+  >
+    <mat-icon>{{ tema.escuro() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+  </button>
+</mat-toolbar>
+
+<main>
+  <app-entrada />
+  <app-resultado />
+</main>
+
+<footer data-ajuda="rodape">
+  @if (cbo.carregada()) {
+    <span>
+      Base CBO: {{ cbo.totalOcupacoes() }} ocupações · atualizada em {{ cbo.geradoEm() }} ·
+      fonte: {{ cbo.fonte() }}
+    </span>
+  }
+</footer>
+
+<app-ajuda />
