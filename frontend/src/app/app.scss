@@ -79,6 +79,57 @@ footer {
   border-top: 1px solid var(--mat-sys-outline-variant);
 }
 
+// Dropdown do menu de base CBO em CSS puro (sem MatMenu/CDK Overlay: eles
+// puxariam o CDK Overlay inteiro para o bundle inicial e estouravam o
+// orçamento de 1MB por causa de um menu de uso ocasional).
+.menu-base-cbo {
+  position: relative;
+
+  .botao-base-cbo.customizada {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--mat-sys-tertiary, #ffb300);
+      border: 1px solid var(--marca-azul);
+    }
+  }
+}
+
+.painel-base-cbo {
+  position: absolute;
+  top: calc(100% + 4px);
+  // Ancorado pela direita: o botão fica perto da borda direita do cabeçalho,
+  // então abrir para a direita (left: 0) empurrava o painel para fora da tela.
+  right: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 4px 0;
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 30%);
+
+  button {
+    justify-content: flex-start;
+    gap: 8px;
+    border-radius: 0;
+    padding: 8px 16px;
+    white-space: normal;
+    text-align: left;
+  }
+}
+
 .info-base-cbo {
   display: flex;
   flex-direction: column;
