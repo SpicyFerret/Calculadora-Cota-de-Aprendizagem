@@ -1,0 +1,141 @@
+@if (editor.aberto()) {
+  <div class="scrim" (click)="fecharSemSalvar()"></div>
+}
+
+<aside class="painel" [class.visivel]="editor.aberto()" aria-label="Editor da base CBO">
+  <header>
+    <h2>Editar base CBO</h2>
+    <button matIconButton type="button" (click)="fecharSemSalvar()" aria-label="Fechar editor">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="corpo">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="campo-busca">
+      <mat-label>Buscar por código ou título</mat-label>
+      <input matInput [ngModel]="termoBusca()" (ngModelChange)="aoMudarBusca($event)" />
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+
+    <button matButton="outlined" class="botao-adicionar" type="button" (click)="abrirFormAdicionar()">
+      <mat-icon>add</mat-icon>
+      Adicionar ocupação
+    </button>
+
+    @if (ocupacaoEmForm(); as form) {
+      <fieldset class="form-ocupacao">
+        <legend>{{ editandoCodigoOriginal() === null ? 'Nova ocupação' : 'Editar ocupação' }}</legend>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="campo-codigo">
+          <mat-label>Código</mat-label>
+          <input
+            matInput
+            maxlength="6"
+            inputmode="numeric"
+            [ngModel]="form.codigo"
+            (ngModelChange)="ocupacaoEmForm.set({ ...form, codigo: $event })"
+          />
+          @if (errosForm().codigo; as erro) {
+            <mat-hint class="hint-erro">{{ erro }}</mat-hint>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="campo-titulo">
+          <mat-label>Título</mat-label>
+          <input matInput [ngModel]="form.titulo" (ngModelChange)="ocupacaoEmForm.set({ ...form, titulo: $event })" />
+          @if (errosForm().titulo; as erro) {
+            <mat-hint class="hint-erro">{{ erro }}</mat-hint>
+          }
+        </mat-form-field>
+
+        <mat-slide-toggle
+          [ngModel]="form.exigeFormacaoProfissional"
+          (ngModelChange)="ocupacaoEmForm.set({ ...form, exigeFormacaoProfissional: $event })"
+        >
+          Exige formação profissional
+        </mat-slide-toggle>
+
+        <div class="acoes-form">
+          <button matButton type="button" (click)="fecharForm()">Cancelar</button>
+          <button matButton="filled" type="button" (click)="salvarLinhaDoForm()">Confirmar</button>
+        </div>
+      </fieldset>
+    }
+
+    <div class="tabela-wrap">
+      <table class="tabela-ocupacoes">
+        <thead>
+          <tr>
+            <th class="col-codigo">Código</th>
+            <th>Título</th>
+            <th class="col-exige">Exige formação</th>
+            <th class="col-acoes"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (o of ocupacoesPaginadas(); track o.codigo) {
+            <tr>
+              <td class="col-codigo">{{ o.codigo }}</td>
+              <td>{{ o.titulo }}</td>
+              <td class="col-exige">{{ o.exigeFormacaoProfissional ? 'Sim' : 'Não' }}</td>
+              <td class="col-acoes">
+                <button
+                  matIconButton
+                  type="button"
+                  (click)="abrirFormEditar(o)"
+                  matTooltip="Editar"
+                  aria-label="Editar ocupação"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  matIconButton
+                  type="button"
+                  (click)="excluirLinha(o)"
+                  matTooltip="Excluir"
+                  aria-label="Excluir ocupação"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="vazio">Nenhuma ocupação encontrada.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="paginacao">
+      <button
+        matIconButton
+        type="button"
+        (click)="paginaAnterior()"
+        [disabled]="paginaClampada() === 0"
+        aria-label="Página anterior"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <span>Página {{ paginaClampada() + 1 }} de {{ totalPaginas() }} · {{ filtradas().length }} ocupação(ões)</span>
+      <button
+        matIconButton
+        type="button"
+        (click)="proximaPagina()"
+        [disabled]="paginaClampada() >= totalPaginas() - 1"
+        aria-label="Próxima página"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <footer class="acoes-rodape">
+    <button matButton type="button" (click)="fecharSemSalvar()">Cancelar</button>
+    <button matButton="filled" type="button" [disabled]="!houveAlteracao()" (click)="salvarTudo()">
+      <mat-icon>save</mat-icon>
+      Salvar alterações
+    </button>
+  </footer>
+</aside>

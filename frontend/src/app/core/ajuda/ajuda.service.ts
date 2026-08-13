@@ -191,9 +191,9 @@ export class AjudaService {
     },
     {
       id: 'base-cbo',
-      titulo: 'Base CBO: baixar ou atualizar',
+      titulo: 'Base CBO: baixar, editar ou atualizar',
       descricao:
-        'Baixe a base atual em JSON, CSV ou XLSX, ou carregue um arquivo próprio para substituí-la — útil se você tem uma versão mais recente que a publicada no site. A base carregada fica salva neste navegador; "Restaurar base padrão" volta à base oficial do site.',
+        'Baixe a base atual em JSON, CSV ou XLSX, edite ocupações direto na página (adicionar, alterar ou excluir) ou carregue um arquivo próprio para substituí-la — útil se você tem uma versão mais recente que a publicada no site. A base editada ou carregada fica salva neste navegador; "Restaurar base padrão" volta à base oficial do site.',
       alvo: '[data-ajuda="base-cbo"]',
     },
   ];
