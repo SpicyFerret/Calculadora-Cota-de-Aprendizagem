@@ -40,6 +40,10 @@
           <mat-icon>upload_file</mat-icon>
           Carregar base atualizada…
         </button>
+        <button matButton (click)="editorCbo.abrir(); menuBaseCboAberto.set(false)">
+          <mat-icon>edit_note</mat-icon>
+          Editar base CBO…
+        </button>
         @if (cbo.customizada()) {
           <button matButton (click)="restaurarBasePadrao(); menuBaseCboAberto.set(false)">
             <mat-icon>restart_alt</mat-icon>
@@ -81,3 +85,4 @@
 </footer>
 
 <app-ajuda />
+<app-editor-cbo />

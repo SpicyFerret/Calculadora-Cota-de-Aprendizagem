@@ -6,14 +6,25 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { AjudaService } from './core/ajuda/ajuda.service';
 import { CboBaseService } from './core/cbo/cbo-base.service';
 import { CboService } from './core/cbo/cbo.service';
+import { EditorCboService } from './core/cbo/editor-cbo.service';
 import { ThemeService } from './core/theme/theme.service';
 import { Ajuda } from './features/ajuda/ajuda';
+import { EditorCbo } from './features/editor-cbo/editor-cbo';
 import { Entrada } from './features/entrada/entrada';
 import { Resultado } from './features/resultado/resultado';
 
 @Component({
   selector: 'app-root',
-  imports: [Ajuda, Entrada, Resultado, MatButtonModule, MatIconModule, MatSnackBarModule, MatToolbarModule],
+  imports: [
+    Ajuda,
+    EditorCbo,
+    Entrada,
+    Resultado,
+    MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule,
+    MatToolbarModule,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   host: { '[class.ajuda-aberta]': 'ajuda.aberta()' },
@@ -23,6 +34,7 @@ export class App {
   readonly tema = inject(ThemeService);
   readonly ajuda = inject(AjudaService);
   readonly baseCbo = inject(CboBaseService);
+  readonly editorCbo = inject(EditorCboService);
   private aviso = inject(MatSnackBar);
 
   readonly importandoBase = signal(false);
